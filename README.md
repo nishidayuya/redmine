@@ -21,7 +21,7 @@ $ docker compose up
 ### Run Test
 
 ```console
-$ docker compose run -it redmine bash -l
+$ docker compose run -it --rm redmine bash -l
 # bin/rails runner test/unit/project_test.rb
 # 
 ```

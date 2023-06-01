@@ -15,7 +15,7 @@ services:
     volumes:
       - /run/user/1000/keyring/ssh:/run/ssh_socket
       - ./:/opt/app
-      - redmiine-files:/opt/app/files
+      - redmine-files:/opt/app/files
     tmpfs:
       - /opt/app/tmp/cache
       - /opt/app/tmp/pids

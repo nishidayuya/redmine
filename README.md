@@ -17,3 +17,11 @@ $ docker compose run redmine bin/rake redmine:load_default_data REDMINE_LANG=ja
 ```console
 $ docker compose up
 ```
+
+### Run Test
+
+```console
+$ docker compose run -it redmine bash -l
+# bin/rails runner test/unit/project_test.rb
+# 
+```

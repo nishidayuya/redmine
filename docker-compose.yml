@@ -1,0 +1,28 @@
+version: "3.0"
+
+services:
+  postgres:
+    image: postgres:11.11-alpine
+    environment:
+      LANG: C.UTF-8
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+  redmine:
+    build: .
+    environment:
+      SSH_AUTH_SOCK: /run/ssh_socket
+    volumes:
+      - /run/user/1000/keyring/ssh:/run/ssh_socket
+      - ./:/opt/app
+    tmpfs:
+      - /opt/app/tmp/cache
+      - /opt/app/tmp/pids
+      - /opt/app/tmp/sockets
+    ports:
+      - 3000:3000
+    depends_on:
+      - postgres
+
+volumes:
+  postgres-data:

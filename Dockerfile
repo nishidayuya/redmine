@@ -1,4 +1,4 @@
-FROM ruby:2.6.6-slim-buster
+FROM ruby:3.1.4-slim-bullseye
 
 ENV LANG C.UTF-8
 ENV DEBIAN_FRONTEND noninteractive
@@ -6,24 +6,27 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN set -eux && \
   apt-get update && \
   apt-get install -y --no-install-recommends \
+    brz \
     build-essential \
     chromium \
     chromium-driver \
+    cvs \
+    fonts-ipafont \
     git \
     libmagickwand-6.q16-dev \
     libpq-dev \
+    libsqlite3-dev \
     libxml2-dev \
     libxslt-dev \
+    mercurial \
     openssh-client \
-    postgresql-client-11 \
+    postgresql-client \
+    subversion \
     tzdata
 RUN set -eux && \
     install -m 700 -o root -g root -d -v /root/.ssh && \
     (echo Host github.com && echo '  StrictHostKeyChecking no') | tee /root/.ssh/config && \
     git config --global url.'git@github.com:'.insteadOf https://github.com/
-RUN set -eux && \
-  apt-get install -y --no-install-recommends \
-    libsqlite3-dev
 
 WORKDIR /opt/app
 COPY Gemfile ./
@@ -37,5 +40,3 @@ RUN set -eux && \
 EXPOSE 3000
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["bin/rails", "server", "--binding=0.0.0.0"]
-
-COPY . /opt/app

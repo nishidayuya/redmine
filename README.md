@@ -3,6 +3,10 @@
 ### Setup
 
 ```console
+$ cp -a .env.example .env
+
+<edit .env if you need>
+
 $ docker compose build
 ```
 

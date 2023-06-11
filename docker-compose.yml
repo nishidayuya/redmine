@@ -9,7 +9,10 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
   redmine:
-    build: .
+    build:
+      context: .
+      args:
+        RUBY_VERSION: ${RUBY_VERSION}
     environment:
       SSH_AUTH_SOCK: /run/ssh_socket
     volumes:

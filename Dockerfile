@@ -1,4 +1,4 @@
-ARG RUBY_VERSION=latest
+ARG RUBY_VERSION
 FROM ruby:$RUBY_VERSION-slim-bullseye
 
 ENV LANG C.UTF-8

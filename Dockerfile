@@ -1,4 +1,5 @@
-FROM ruby:3.1.4-slim-bullseye
+ARG RUBY_VERSION=latest
+FROM ruby:$RUBY_VERSION-slim-bullseye
 
 ENV LANG C.UTF-8
 ENV DEBIAN_FRONTEND noninteractive

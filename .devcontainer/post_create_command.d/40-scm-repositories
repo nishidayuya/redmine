@@ -2,15 +2,10 @@
 
 set -eux
 
-# Test repositories for the SCM tests. Only the SCMs this Dev Container ships a
-# client for are set up: Subversion and Git. "filesystem" needs no client at
-# all. The Bazaar, CVS and Mercurial tests find no repository and skip
-# themselves.
-RAILS_ENV=test bundle exec rake \
-  test:scm:setup:subversion \
-  test:scm:setup:git \
-  test:scm:setup:git_utf8 \
-  test:scm:setup:filesystem
+# Test repositories for the SCM tests of every SCM Redmine supports: Subversion,
+# CVS, Bazaar, Mercurial, Git (with and without non-ASCII paths) and the
+# filesystem. This is what "ci:setup" does too.
+RAILS_ENV=test bundle exec rake test:scm:setup:all
 
 # Re-extracts a repository whose fixture is newer than the extracted copy.
 RAILS_ENV=test bundle exec rake test:scm:update

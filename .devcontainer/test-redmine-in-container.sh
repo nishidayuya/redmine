@@ -74,7 +74,11 @@ test "${after}" -gt "${before}"
   print [server["command"], *server["args"]].map { |arg| "\x27#{arg}\x27" }.join(" ")
 ')" | tee tmp/playwright-mcp-test.log | grep -q 'Page Title: Redmine'
 
-# The test suites, the same ones .github/workflows runs.
+# The test suites, the same ones .github/workflows runs. Some tests, such as
+# IssuesControllerTest#test_index_grouped_by_created_on_if_time_zone_is_utc,
+# assume the UTC that GitHub Actions runs in, while TZ in the container may
+# come from a file in DOT_DEVCONTAINER_HOME.
+export TZ=UTC
 bin/rails test
 bin/rails test:autoload
 bundle exec rubocop --parallel

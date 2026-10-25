@@ -65,6 +65,10 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   end
 
   teardown do
+    # A response to an Ajax request that is still in flight would set the
+    # session cookie again after Capybara has reset the browser, so that the
+    # next test would start logged in.
+    wait_for_pending_ajax
     Setting.delete_all
     Setting.clear_cache
   end
@@ -93,6 +97,14 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     Timeout.timeout(Capybara.default_max_wait_time) do
       loop until page.evaluate_script("jQuery.active").zero?
     end
+  end
+
+  def wait_for_pending_ajax
+    Timeout.timeout(Capybara.default_max_wait_time) do
+      loop until page.evaluate_script("typeof jQuery === 'undefined' || jQuery.active === 0")
+    end
+  rescue Timeout::Error, Selenium::WebDriver::Error::WebDriverError
+    # Leave it to the test result: this is only a best effort to settle down.
   end
 
   def clear_downloaded_files

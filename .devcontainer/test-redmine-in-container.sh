@@ -17,6 +17,9 @@ node --version
 yarn --version
 git --version
 svn --version --quiet
+bzr --version
+cvs --version
+hg --version
 chromium --version
 chromedriver --version
 convert --version | head -n 1
@@ -80,6 +83,8 @@ test "${after}" -gt "${before}"
 # come from a file in DOT_DEVCONTAINER_HOME.
 export TZ=UTC
 bin/rails test
+LANG=en_US.ISO8859-1 LC_ALL=en_US.ISO8859-1 \
+  bin/rails test test/unit/repository_bazaar_test.rb
 bin/rails test:autoload
 bundle exec rubocop --parallel
 npx stylelint "app/assets/stylesheets/**/*.css"

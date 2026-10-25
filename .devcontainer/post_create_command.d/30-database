@@ -25,9 +25,8 @@ if test "$(bundle exec rails runner 'print Tracker.count')" -eq 0
 then
   REDMINE_LANG=en bundle exec rake redmine:load_default_data
 
-  # Git and Subversion are the SCMs that this Dev Container ships a client
-  # for, so they are the only ones the repository form offers. This is a plain
-  # setting: change it in Administration > Settings > Repositories whenever you
-  # add a client.
+  # Git and Subversion are the SCMs that the repository form offers. The
+  # clients of Bazaar, CVS and Mercurial are installed for their tests too, so
+  # enable them in Administration > Settings > Repositories when you need them.
   bundle exec rails runner 'Setting.enabled_scm = %w[Subversion Git]'
 fi

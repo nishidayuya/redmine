@@ -177,6 +177,9 @@ ARG NODE_VERSION=24
 #   are for switching config/database.yml over to the "mysql" service.
 # - subversion: Git is installed above already; together they are the SCMs
 #   that Redmine offers in this Dev Container.
+# - bzr (Breezy), cvs, mercurial: the other SCMs Redmine supports, so that
+#   their tests run instead of skipping themselves.
+# - locales: the en_US.ISO-8859-1 locale generated below.
 # - imagemagick, ghostscript, gsfonts: attachment thumbnails and the Gantt PNG
 #   export.
 # - pandoc: Redmine::Markdownizer, which previews .docx and friends as
@@ -186,12 +189,16 @@ ARG NODE_VERSION=24
 RUN sudo apt-get update \
     && sudo env -- DEBIAN_FRONTEND=noninteractive \
     apt-get -y install --no-install-recommends \
+    bzr \
+    cvs \
     default-libmysqlclient-dev \
     default-mysql-client \
     fonts-liberation \
     ghostscript \
     gsfonts \
     imagemagick \
+    locales \
+    mercurial \
     iproute2 \
     libpq-dev \
     pandoc \
@@ -199,6 +206,21 @@ RUN sudo apt-get update \
     postgresql-client \
     subversion \
     && sudo rm -rf /var/lib/apt/lists/*
+
+# The Bazaar tests with non-ASCII paths run in this locale, the same way as
+# .github/workflows/tests.yml runs test/unit/repository_bazaar_test.rb with
+# LANG=en_US.ISO8859-1.
+RUN echo "en_US ISO-8859-1" | sudo tee -a /etc/locale.gen > /dev/null \
+    && sudo locale-gen
+
+# /usr/bin/brz of Breezy 3.3 is a launcher written in Rust, which panics when
+# an argument is not valid UTF-8, such as the Latin-1 paths of the Bazaar tests
+# above (https://www.redmine.org/issues/42024). Redmine runs "bzr", so put a
+# "bzr" that starts Breezy through Python, which accepts any bytes, ahead of it
+# on PATH.
+RUN printf '%s\n' '#!/bin/sh' 'exec /usr/bin/python3 -m breezy "$@"' \
+    | sudo tee /usr/local/bin/bzr > /dev/null \
+    && sudo chmod 0755 /usr/local/bin/bzr
 
 # ImageMagick 7 dropped the "convert" entry point, but Redmine::Thumbnail still
 # calls it. Provide it when only "magick" is installed.

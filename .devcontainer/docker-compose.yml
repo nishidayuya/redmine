@@ -1,0 +1,145 @@
+# Development stack for Redmine itself, driven by devcontainer.json.
+#
+# No service publishes a port to the host on purpose: Redmine, Mailpit and the
+# databases are only reachable from inside this Compose network, under the
+# service names below. Work from inside the "app" container, for example with
+# "devcontainer exec --workspace-folder . bash".
+#
+# The image versions come from .devcontainer/.env, see .env.example.
+
+x-app: &app
+  image: redmine-devcontainer:ruby-${RUBY_VERSION:?see .devcontainer/.env.example}
+  # Secrets such as GH_TOKEN, see .env.additional.example.
+  env_file:
+    - .env.additional
+  environment: &app-environment
+    # Gems are installed into the bind-mounted workspace, so that they survive
+    # a rebuild of the image and are shared by "app", "web" and "sidekiq".
+    BUNDLE_PATH: /workspaces/redmine/vendor/bundle
+    # Read by config/database.yml and config/configuration.yml.
+    REDMINE_POSTGRES_HOST: postgres
+    REDMINE_POSTGRES_USER: redmine
+    REDMINE_POSTGRES_PASSWORD: redmine
+    REDMINE_MYSQL_HOST: mysql
+    REDMINE_MYSQL_USER: root
+    REDMINE_MYSQL_PASSWORD: redmine
+    REDMINE_SMTP_HOST: mailpit
+    REDMINE_SMTP_PORT: "1025"
+    # Read by Sidekiq, both by the "sidekiq" service and by Redmine enqueueing
+    # jobs.
+    REDIS_URL: redis://redis:6379/0
+    # Redmine's system tests run "using: :chrome", so headless mode and the
+    # flags needed in a container have to come from here.
+    GOOGLE_CHROME_OPTS_ARGS: "headless=new,no-sandbox,disable-dev-shm-usage,disable-gpu"
+  volumes:
+    - ..:/workspaces/redmine:cached
+  working_dir: /workspaces/redmine
+  # Chromium needs more than the default 64MB.
+  shm_size: 1gb
+  init: true
+  extra_hosts:
+    # Docker Desktop resolves host.docker.internal to the host on its own, but
+    # Docker Engine on Linux does not.
+    - host.docker.internal:host-gateway
+
+# "web" and "sidekiq" run the image that the Dev Container CLI builds for "app",
+# so they must not try to pull it from a registry.
+x-app-image-user: &app-image-user
+  <<: *app
+  pull_policy: never
+  user: vscode
+  restart: unless-stopped
+  depends_on:
+    - app
+    - postgres
+    - mysql
+    - redis
+    - mailpit
+
+services:
+  # Where you work. The Dev Container CLI attaches to it, runs the lifecycle
+  # commands of devcontainer.json in it, and keeps it alive.
+  app:
+    <<: *app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        RUBY_VERSION: ${RUBY_VERSION}
+    depends_on:
+      - postgres
+      - mysql
+      - redis
+      - mailpit
+
+  # Redmine itself, in the development environment, on http://web:3000.
+  # Code changes are picked up without a restart; after a change to the gems,
+  # restart it with "docker compose restart web" from the host.
+  web:
+    <<: *app-image-user
+    command:
+      - .devcontainer/wait-for-setup.sh
+      - bin/rails
+      - server
+      - --binding=0.0.0.0
+      - --port=3000
+      # Not tmp/pids/server.pid: that is in the shared workspace, where it would
+      # stop a "bin/rails server" started by hand in "app".
+      - --pid=/tmp/server.pid
+
+  # Background jobs. config/additional_environment.rb points Active Job at
+  # Sidekiq in every environment but "test".
+  sidekiq:
+    <<: *app-image-user
+    command:
+      - .devcontainer/wait-for-setup.sh
+      - bundle
+      - exec
+      - sidekiq
+      - --config=.devcontainer/sidekiq.yml
+
+  postgres:
+    image: postgres:${POSTGRES_VERSION}-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: redmine
+      POSTGRES_PASSWORD: redmine
+    volumes:
+      # PostgreSQL 18 and later images want the parent of the "data" directory
+      # mounted, so that "pg_upgrade --link" works across major versions.
+      # https://github.com/docker-library/postgres/pull/1259
+      - postgres-data:/var/lib/postgresql
+
+  # Not used unless you switch config/database.yml over to it.
+  mysql:
+    image: mysql:${MYSQL_VERSION}
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: redmine
+    command:
+      # Recommended by https://www.redmine.org/projects/redmine/wiki/MySQL_configuration
+      - --transaction-isolation=READ-COMMITTED
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  redis:
+    image: redis:${REDIS_VERSION}-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+  # The SMTP server that Redmine delivers to (mailpit:1025). Read the delivered
+  # emails on its web UI, http://mailpit:8025.
+  mailpit:
+    image: axllent/mailpit:v${MAILPIT_VERSION}
+    restart: unless-stopped
+    environment:
+      MP_DATABASE: /data/mailpit.db
+    volumes:
+      - mailpit-data:/data
+
+volumes:
+  postgres-data:
+  mysql-data:
+  redis-data:
+  mailpit-data:

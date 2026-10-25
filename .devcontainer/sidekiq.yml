@@ -1,0 +1,8 @@
+# Configuration of the "sidekiq" service of docker-compose.yml.
+#
+# Redmine's own jobs use Active Job's "default" queue, while Action Mailer's
+# deliver_later may use "mailers". Sidekiq only listens to "default" unless it is
+# told otherwise, so both are listed here.
+:queues:
+  - default
+  - mailers

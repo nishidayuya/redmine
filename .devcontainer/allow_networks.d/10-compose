@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -eu
+
+# The network that docker-compose.yml puts every service on, so that "app"
+# reaches PostgreSQL, MySQL, Redis, Mailpit and Redmine itself on any port.
+#
+# Docker picks the subnet when it creates the network, so it is read off the
+# interface that carries the default route instead of being written down here.
+# The address keeps its host part (e.g. 172.18.0.5/16); iptables masks it.
+dev="$(ip -4 route show default | awk '{ print $5; exit }')"
+ip -4 -o addr show dev "${dev}" | awk '{ print $4 }'

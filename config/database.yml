@@ -1,0 +1,46 @@
+# Database configuration for the Dev Container in .devcontainer.
+#
+# PostgreSQL is the RDBMS in use: the "postgres" service of
+# .devcontainer/docker-compose.yml, which also sets the environment variables
+# read below.
+#
+# To use the "mysql" service instead, comment out the PostgreSQL "default"
+# block, uncomment the MySQL one, and run "bundle install" and
+# .devcontainer/post_create_command.d/30-database again. Redmine's Gemfile picks
+# the database gem from the adapters used in this file.
+
+default: &default
+  adapter: postgresql
+  encoding: utf8
+  host: <%= ENV.fetch('REDMINE_POSTGRES_HOST', 'postgres') %>
+  username: <%= ENV.fetch('REDMINE_POSTGRES_USER', 'redmine') %>
+  password: <%= ENV.fetch('REDMINE_POSTGRES_PASSWORD', 'redmine') %>
+
+#default: &default
+#  adapter: mysql2
+#  # You can also use "trilogy", an adapter for MySQL-compatible servers.
+#  # adapter: trilogy
+#  encoding: utf8mb4
+#  host: <%= ENV.fetch('REDMINE_MYSQL_HOST', 'mysql') %>
+#  username: <%= ENV.fetch('REDMINE_MYSQL_USER', 'root') %>
+#  password: <%= ENV.fetch('REDMINE_MYSQL_PASSWORD', 'redmine') %>
+#  variables:
+#    # Recommended `transaction_isolation` for MySQL to avoid concurrency issues is
+#    # `READ-COMMITTED`.
+#    # See https://www.redmine.org/projects/redmine/wiki/MySQL_configuration
+#    transaction_isolation: "READ-COMMITTED"
+
+development:
+  <<: *default
+  database: redmine_development
+
+# Warning: The database defined as "test" will be erased and
+# re-generated from your development database when you run "rake".
+# Do not set this db to the same as development or production.
+test:
+  <<: *default
+  database: redmine_test
+
+production:
+  <<: *default
+  database: redmine

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -eux
+
+# docker compose reads .devcontainer/.env for the ${..._VERSION} substitutions
+# in docker-compose.yml, so it must exist before the containers are created.
+# It is ignored by git so that every checkout can pick its own versions.
+test -f .devcontainer/.env ||
+  cp .devcontainer/.env.example .devcontainer/.env

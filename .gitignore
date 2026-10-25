@@ -6,9 +6,6 @@
 /.rvmrc
 /.ruby-version
 /.byebug_history
-/config/additional_environment.rb
-/config/configuration.yml
-/config/database.yml
 /config/email.yml
 /config/secrets.yml
 /config/initializers/session_store.rb
@@ -38,6 +35,8 @@
 /tmp/test/*
 /tmp/thumbnails/*
 /vendor/cache
+# BUNDLE_PATH of the Dev Container, see .devcontainer/docker-compose.yml.
+/vendor/bundle
 /vendor/javascript/mermaid.min.js
 *.rbc
 

@@ -161,3 +161,75 @@ if [ -d ~/.zshrc.local.d ]; then
 fi
 ZSHRC
 DOCKERFILE_RUN
+
+# Everything above comes from dot-devcontainer v5.0.0
+# (https://github.com/nishidayuya/dot-devcontainer) and is kept as it is, so that
+# it can be updated by re-running its installer. Everything below is specific to
+# the development of Redmine itself.
+
+# The Ruby version comes from RUBY_VERSION in .devcontainer/.env, which
+# docker-compose.yml passes as a build argument. See .devcontainer/.env.example.
+ARG RUBY_VERSION
+ARG NODE_VERSION=24
+
+# - libpq-dev, postgresql-client: the "pg" gem and pg_isready / psql against
+#   the "postgres" service. default-libmysqlclient-dev and default-mysql-client
+#   are for switching config/database.yml over to the "mysql" service.
+# - subversion: Git is installed above already; together they are the SCMs
+#   that Redmine offers in this Dev Container.
+# - imagemagick, ghostscript, gsfonts: attachment thumbnails and the Gantt PNG
+#   export.
+# - pandoc: Redmine::Markdownizer, which previews .docx and friends as
+#   Markdown. Without it those attachment tests skip themselves.
+# - fonts-liberation: Chromium renders the system tests with it.
+# hadolint ignore=DL3008
+RUN sudo apt-get update \
+    && sudo env -- DEBIAN_FRONTEND=noninteractive \
+    apt-get -y install --no-install-recommends \
+    default-libmysqlclient-dev \
+    default-mysql-client \
+    fonts-liberation \
+    ghostscript \
+    gsfonts \
+    imagemagick \
+    iproute2 \
+    libpq-dev \
+    pandoc \
+    pkg-config \
+    postgresql-client \
+    subversion \
+    && sudo rm -rf /var/lib/apt/lists/*
+
+# ImageMagick 7 dropped the "convert" entry point, but Redmine::Thumbnail still
+# calls it. Provide it when only "magick" is installed.
+RUN command -v convert > /dev/null \
+    || sudo ln -s "$(command -v magick)" /usr/local/bin/convert
+
+# Debian's ImageMagick refuses to read PDFs, which makes the attachment
+# thumbnail tests fail. Upstream CI does the same thing, see
+# .github/actions/setup-redmine/action.yml.
+RUN for dir in /etc/ImageMagick-6 /etc/ImageMagick-7; do \
+      test -d "${dir}" || continue; \
+      printf '%s\n' \
+        '<policymap>' \
+        '<policy domain="coder" rights="read | write" pattern="PDF" />' \
+        '</policymap>' | sudo tee "${dir}/policy.xml" > /dev/null; \
+    done
+
+# "ruby@latest" above may be newer than what Redmine's Gemfile accepts, so the
+# version from .devcontainer/.env becomes the global default instead.
+RUN test -n "${RUBY_VERSION}" \
+    && mise use -g "ruby@${RUBY_VERSION}" \
+    && ruby --version
+
+# Node.js runs Playwright MCP and stylelint (see .github/workflows/linters.yml,
+# which drives it through yarn). Playwright MCP drives the Chromium installed
+# above instead of downloading a browser of its own, see /.mcp.json.
+RUN mise use -g "node@${NODE_VERSION}" \
+    && npm install --global yarn @playwright/mcp \
+    && mise reshim \
+    && playwright-mcp --version
+
+# Gems are installed into the bind-mounted workspace (see BUNDLE_PATH in
+# docker-compose.yml), so make bin/ of the workspace reachable too.
+ENV PATH="/workspaces/redmine/bin:${PATH}"

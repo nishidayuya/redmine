@@ -1,3 +1,4 @@
+/.env
 /.env.additional
 # Build scratch space that the two CLIs leave in the workspace when they run:
 # DevPod stages its generated Dockerfile and the resolved features here, and the
@@ -11,3 +12,5 @@
 # The same goes for the allowed networks and allow_networks.d.example.
 /allow_networks.d/*
 !/allow_networks.d/.keep
+# Tracked: the Docker Compose network of docker-compose.yml.
+!/allow_networks.d/10-compose

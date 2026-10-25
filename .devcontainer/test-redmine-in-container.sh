@@ -85,6 +85,20 @@ export TZ=UTC
 bin/rails test
 LANG=en_US.ISO8859-1 LC_ALL=en_US.ISO8859-1 \
   bin/rails test test/unit/repository_bazaar_test.rb
+# Some tests only run on MySQL: those in test/unit/search_test.rb that check
+# how MySQL compares accented characters. Run the files holding them against
+# the "mysql" service too. DATABASE_URL takes precedence over
+# config/database.yml.
+#
+# The database is built by the migrations rather than from db/schema.rb, which
+# PostgreSQL dumped with expression indexes that MySQL does not accept, and
+# SCHEMA keeps them from overwriting db/schema.rb with a MySQL dump.
+(
+  export DATABASE_URL='mysql2://root:redmine@mysql/redmine_test?encoding=utf8mb4'
+  export SCHEMA=tmp/test/mysql_schema.rb
+  RAILS_ENV=test bin/rails db:drop db:create db:migrate > /dev/null
+  bin/rails test $(grep -l -r -E 'skip (unless mysql\?|if .*postgresql\?)' test)
+)
 bin/rails test:autoload
 bundle exec rubocop --parallel
 npx stylelint "app/assets/stylesheets/**/*.css"

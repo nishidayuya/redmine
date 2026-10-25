@@ -5,3 +5,11 @@
 
 # Background jobs, see config/additional_environment.rb.
 gem 'sidekiq', '~> 8.1'
+
+# The gems that Redmine's Gemfile adds for MySQL, which it only does when
+# config/database.yml uses MySQL. They are needed anyway, so that the "mysql"
+# service can be used through DATABASE_URL, as
+# .devcontainer/test-redmine-in-container.sh does for the MySQL-only tests.
+# Keep the requirements in sync with the Gemfile.
+gem 'mysql2', '~> 0.5.0'
+gem 'with_advisory_lock'

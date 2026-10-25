@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -eux
+
+# Mermaid.js is not bundled with Redmine. Install it, the same way as
+# .github/workflows/tests.yml does, so that Mermaid code blocks render as
+# diagrams and test/system/mermaid_rendering_test.rb runs instead of skipping
+# itself. It goes to vendor/javascript/mermaid.min.js, which is ignored by git.
+bundle exec rake redmine:mermaid:install

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+set -eux
+
+# stylelint, run by .github/workflows/linters.yml as
+#   npx stylelint "app/assets/stylesheets/**/*.css"
+yarn install --frozen-lockfile

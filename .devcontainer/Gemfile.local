@@ -1,0 +1,7 @@
+# Copied to <workspace>/Gemfile.local by post_create_command.d/00-gemfile-local.
+#
+# Gemfile.local is ignored by git, so this template is where the Dev Container's
+# extra gems live. Redmine's Gemfile evaluates Gemfile.local at the end.
+
+# Background jobs, see config/additional_environment.rb.
+gem 'sidekiq', '~> 8.1'

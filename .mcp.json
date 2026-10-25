@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "playwright-mcp",
+      "args": [
+        "--browser",
+        "chromium",
+        "--executable-path",
+        "/usr/bin/chromium",
+        "--headless",
+        "--no-sandbox",
+        "--isolated",
+        "--output-dir",
+        "/workspaces/redmine/tmp/playwright-mcp"
+      ]
+    }
+  }
+}

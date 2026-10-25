@@ -1,0 +1,35 @@
+# Redmine configuration for the Dev Container in .devcontainer.
+#
+# See config/configuration.yml.example for every setting and its documentation.
+
+# Shared by every environment, the test environment included. Nothing is set
+# here, because the settings below would change what the test suite exercises.
+default:
+
+# Redmine reads this file with YAML.load, which rejects aliases, so the
+# environment sections cannot share an anchor and are spelled out instead.
+development:
+  # Outgoing emails go to the "mailpit" service of
+  # .devcontainer/docker-compose.yml and never leave the Compose network. Read
+  # them on the web UI of Mailpit, http://mailpit:8025.
+  email_delivery:
+    delivery_method: :smtp
+    smtp_settings:
+      address: <%= ENV.fetch('REDMINE_SMTP_HOST', 'mailpit') %>
+      port: <%= ENV.fetch('REDMINE_SMTP_PORT', 1025).to_i %>
+
+  # The repository paths that the Git and Subversion adapters accept. Which
+  # SCMs the repository form offers is the "enabled_scm" setting, which
+  # .devcontainer/post_create_command.d/30-database narrows down to these two.
+  scm_git_path_regexp: '/.+'
+  scm_subversion_path_regexp: '(file:///|https?://|svn://|svn\+ssh://).+'
+
+production:
+  email_delivery:
+    delivery_method: :smtp
+    smtp_settings:
+      address: <%= ENV.fetch('REDMINE_SMTP_HOST', 'mailpit') %>
+      port: <%= ENV.fetch('REDMINE_SMTP_PORT', 1025).to_i %>
+
+  scm_git_path_regexp: '/.+'
+  scm_subversion_path_regexp: '(file:///|https?://|svn://|svn\+ssh://).+'

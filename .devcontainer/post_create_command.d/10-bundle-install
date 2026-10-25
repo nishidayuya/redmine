@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -eux
+
+# BUNDLE_PATH points at <workspace>/vendor/bundle (see docker-compose.yml), so
+# the gems survive a rebuild and are shared with "web" and "sidekiq".
+bundle install --jobs "$(nproc)"
+
+# config/initializers/secret_token.rb, used by the development and production
+# environments. The test environment sets its own secret_key_base.
+test -f config/initializers/secret_token.rb ||
+  bundle exec rake generate_secret_token

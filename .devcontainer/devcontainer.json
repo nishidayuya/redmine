@@ -1,8 +1,20 @@
 {
-  "name": "Mise & Antigravity CLI Dev Container",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
+  "name": "Redmine Dev Container",
+  // The services, and why none of them publishes a port to the host, are
+  // described in docker-compose.yml.
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/redmine",
+  "runServices": [
+    "app",
+    "web",
+    "sidekiq",
+    "postgres",
+    "mysql",
+    "redis",
+    "mailpit"
+  ],
+  "shutdownAction": "stopCompose",
   "features": {
     // Pinned to 4 rather than 2: from 3.x on the feature picks the iptables
     // backend when the container starts instead of when the image is built, so
@@ -25,23 +37,10 @@
     "NET_ADMIN"
   ],
   "initializeCommand": ".devcontainer/run-parts.sh .devcontainer/initialize_command.d",
-  // The path has to be absolute: the Dev Container CLI resolves runArgs
-  // relative to the workspace folder, but DevPod runs "docker run" from its own
-  // agent directory, where a relative path does not exist.
-  //
-  // Docker Desktop resolves host.docker.internal to the host on its own, but
-  // Docker Engine on Linux does not, so --add-host maps the name to the host's
-  // address on the container's bridge ("host-gateway"). That address falls in
-  // the private range of .devcontainer/allow_networks.d.example/
-  // 50-private-classB, so once that file is copied into allow_networks.d, the
-  // firewall lets the container reach every port on it.
-  "runArgs": [
-    "--init",
-    "--add-host=host.docker.internal:host-gateway",
-    "--env-file",
-    "${localWorkspaceFolder}/.devcontainer/.env.additional"
-  ],
+  // runArgs does not apply to a Docker Compose service, so "--init",
+  // "--add-host" and "--env-file" are set in docker-compose.yml instead.
   "overrideCommand": true,
+  "postCreateCommand": ".devcontainer/run-parts.sh .devcontainer/post_create_command.d",
   "postStartCommand": ".devcontainer/run-parts.sh .devcontainer/post_start_command.d",
   "remoteUser": "vscode",
   "updateRemoteUserUID": true,

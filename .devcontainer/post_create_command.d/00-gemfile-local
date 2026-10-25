@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -eux
+
+# Sidekiq is a choice of this Dev Container, not a dependency of Redmine, so it
+# goes into Gemfile.local (which Redmine's Gemfile evaluates and .gitignore
+# ignores) rather than into the Gemfile itself.
+test -f Gemfile.local ||
+  cp .devcontainer/Gemfile.local Gemfile.local

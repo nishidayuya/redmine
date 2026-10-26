@@ -5,10 +5,9 @@
 # "devcontainer exec --workspace-folder . bash".
 #
 # Only Redmine (web:3000) and the web UI of Mailpit (mailpit:8025) are also
-# published to the host, so that they can be opened in a browser there. They
-# are bound to 127.0.0.1 only, so that other machines on the network cannot
-# reach them. The host ports are left to Docker, which picks free ones, so
-# that several of these stacks can run side by side. Look them up with "docker compose port",
+# published to the host, so that they can be opened in a browser there. The
+# host ports are left to Docker, which picks free ones, so that several of
+# these stacks can run side by side. Look them up with "docker compose port",
 # for example "docker compose port web 3000", or with "docker ps". The
 # databases are not published.
 #
@@ -95,7 +94,7 @@ services:
       - --pid=/tmp/server.pid
     # Published on a host port that Docker picks, see the top of this file.
     ports:
-      - "127.0.0.1::3000"
+      - "3000"
 
   # Background jobs. config/additional_environment.rb points Active Job at
   # Sidekiq in every environment but "test".
@@ -148,7 +147,7 @@ services:
     # The web UI, published on a host port that Docker picks, see the top of
     # this file. The SMTP port, 1025, is not published.
     ports:
-      - "127.0.0.1::8025"
+      - "8025"
     volumes:
       - mailpit-data:/data
 

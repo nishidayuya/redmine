@@ -613,6 +613,88 @@ class UserTest < ActiveSupport::TestCase
     assert_equal "admin", user.login
   end
 
+  def test_password_with_argon2id
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
+      user = User.find(1)
+      user.password = "hello123"
+      assert user.save
+
+      user.reload
+      assert user.hashed_password.start_with?('$argon2id$')
+      assert_nil user.salt
+      assert user.check_password?("hello123")
+      assert_not user.check_password?("hello124")
+      assert_not user.password_hash_outdated?
+      assert_equal user, User.try_to_login("admin", "hello123")
+      assert_nil User.try_to_login("admin", "hello124")
+    end
+  end
+
+  def test_argon2id_password_should_be_verified_when_algorithm_is_sha1
+    user = User.find(1)
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
+      user.password = "hello123"
+      assert user.save
+    end
+
+    Redmine::Configuration.with 'password_hash_algorithm' => 'sha1' do
+      user.reload
+      assert user.check_password?("hello123")
+      assert user.password_hash_outdated?
+    end
+  end
+
+  def test_try_to_login_should_rehash_sha1_password_with_argon2id
+    user = User.find(1)
+    token = Token.create!(:user => user, :action => 'autologin')
+    passwd_changed_on = 1.day.ago.change(:usec => 0)
+    user.update_column(:passwd_changed_on, passwd_changed_on)
+
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
+      assert_equal user, User.try_to_login("admin", "admin")
+
+      user.reload
+      assert user.hashed_password.start_with?('$argon2id$')
+      assert_nil user.salt
+      assert_equal passwd_changed_on, user.passwd_changed_on
+      assert Token.exists?(token.id)
+      assert_equal user, User.try_to_login("admin", "admin")
+    end
+  end
+
+  def test_try_to_login_should_rehash_argon2id_password_with_sha1
+    user = User.find(1)
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
+      user.password = "hello123"
+      assert user.save
+    end
+
+    Redmine::Configuration.with 'password_hash_algorithm' => 'sha1' do
+      assert_equal user, User.try_to_login("admin", "hello123")
+
+      user.reload
+      assert_match /\A\h{40}\z/, user.hashed_password
+      assert user.salt.present?
+      assert_equal user, User.try_to_login("admin", "hello123")
+    end
+  end
+
+  def test_try_to_login_should_not_rehash_password_with_wrong_password
+    user = User.find(1)
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
+      assert_nil User.try_to_login("admin", "wrong")
+      assert_equal user.hashed_password, user.reload.hashed_password
+    end
+  end
+
+  def test_unsupported_password_hash_algorithm_should_raise_error
+    Redmine::Configuration.with 'password_hash_algorithm' => 'md5' do
+      assert_raise ArgumentError do
+        User.password_hash_algorithm
+      end
+    end
+  end
+
   def test_validate_password_length
     with_settings :password_min_length => '100' do
       user = User.new(:firstname => "new100",

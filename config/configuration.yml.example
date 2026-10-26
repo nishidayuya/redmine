@@ -151,6 +151,14 @@ default:
   # * encrypt data using 'rake db:encrypt RAILS_ENV=production'
   database_cipher_key:
 
+  # Algorithm used to hash the passwords of the users authenticated by
+  # Redmine itself: sha1 (default) or argon2id.
+  # Passwords hashed with either algorithm can be verified whatever this
+  # setting is. When a user logs in, their password is rehashed with the
+  # algorithm set here if it was hashed with the other one.
+  #
+  #password_hash_algorithm: argon2id
+
   # Your secret key for verifying cookie session data integrity. If you
   # change this key, all old sessions will become invalid! Make sure the
   # secret is at least 30 characters and all random, no regular words or

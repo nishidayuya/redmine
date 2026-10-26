@@ -1,6 +1,6 @@
 {
   "name": "Redmine Dev Container",
-  // The services, and why none of them publishes a port to the host, are
+  // The services, and which of their ports are published to the host, are
   // described in docker-compose.yml.
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",

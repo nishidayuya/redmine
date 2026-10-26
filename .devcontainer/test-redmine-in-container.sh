@@ -27,8 +27,8 @@ gs --version
 claude --version
 playwright-mcp --version
 
-# Services. None of them publishes a port to the host; they are reached under
-# their service names.
+# Services. Inside the Compose network they are reached under their service
+# names.
 pg_isready --host postgres --username redmine
 for address in mysql:3306 redis:6379 mailpit:1025 mailpit:8025 web:3000
 do

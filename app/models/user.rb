@@ -243,6 +243,8 @@ class User < Principal
       # user is already in local database
       return nil unless user.check_password?(password)
       return nil if !user.active? && active_only
+
+      user.rehash_password!(password) if user.password_hash_outdated?
     else
       # user is not yet registered, try to authenticate with available sources
       attrs = AuthSource.authenticate(login, password)
@@ -353,16 +355,34 @@ class User < Principal
     if auth_source_id.present?
       auth_source.authenticate(self.login, clear_password)
     else
-      User.hash_password("#{salt}#{User.hash_password clear_password}") == hashed_password
+      User.verify_password(clear_password, salt, hashed_password)
     end
   end
 
-  # Generates a random salt and computes hashed_password for +clear_password+
-  # The hashed password is stored in the following form: SHA1(salt + SHA1(password))
+  # Computes hashed_password for +clear_password+ with the algorithm given by
+  # the password_hash_algorithm setting of config/configuration.yml.
+  # The hashed password is stored in one of the following forms:
+  # * sha1: SHA1(salt + SHA1(password)) with a random salt stored in salt
+  # * argon2id: the PHC string format (e.g. "$argon2id$v=19$m=...") that
+  #   includes the salt and the parameters, salt is left blank
   def salt_password(clear_password)
-    self.salt = User.generate_salt
-    self.hashed_password = User.hash_password("#{salt}#{User.hash_password clear_password}")
+    self.salt, self.hashed_password = User.digest_password(clear_password)
     self.passwd_changed_on = Time.now.change(:usec => 0)
+  end
+
+  # Returns true if hashed_password was not computed with the configured
+  # password hash algorithm
+  def password_hash_outdated?
+    return false if auth_source_id.present? || hashed_password.blank?
+
+    User.password_hash_algorithm_of(hashed_password) != User.password_hash_algorithm
+  end
+
+  # Rehashes +clear_password+ with the configured password hash algorithm
+  # without changing passwd_changed_on nor invalidating the user's tokens
+  def rehash_password!(clear_password)
+    salt, hashed_password = User.digest_password(clear_password)
+    update_columns(:salt => salt, :hashed_password => hashed_password)
   end
 
   # Does the backend storage allow this user to change their password?
@@ -1106,6 +1126,53 @@ class User < Principal
     # Returns a 128bits random salt as a hex string (32 chars long)
     def generate_salt
       Redmine::Utils.random_hex(16)
+    end
+
+    PASSWORD_HASH_ALGORITHMS = %w(sha1 argon2id).freeze
+
+    # Returns the password hash algorithm used for new passwords
+    def password_hash_algorithm
+      algorithm = Redmine::Configuration['password_hash_algorithm'].to_s.downcase.presence || 'sha1'
+      unless PASSWORD_HASH_ALGORITHMS.include?(algorithm)
+        raise ArgumentError, "Unsupported password_hash_algorithm: #{algorithm}"
+      end
+
+      algorithm
+    end
+
+    # Returns the algorithm that computed +hashed_password+
+    def password_hash_algorithm_of(hashed_password)
+      hashed_password.to_s.start_with?('$argon2id$') ? 'argon2id' : 'sha1'
+    end
+
+    # Returns [salt, hashed_password] for +clear_password+
+    def digest_password(clear_password)
+      case password_hash_algorithm
+      when 'argon2id'
+        require 'argon2'
+        [nil, Argon2::Password.create(clear_password.to_s, :type => :argon2id)]
+      else
+        salt = generate_salt
+        [salt, hash_password("#{salt}#{hash_password clear_password}")]
+      end
+    end
+
+    # Returns true if +clear_password+ matches +hashed_password+
+    def verify_password(clear_password, salt, hashed_password)
+      case password_hash_algorithm_of(hashed_password)
+      when 'argon2id'
+        require 'argon2'
+        begin
+          Argon2::Password.verify_password(clear_password.to_s, hashed_password)
+        rescue Argon2::ArgonHashFail
+          false
+        end
+      else
+        ActiveSupport::SecurityUtils.secure_compare(
+          hash_password("#{salt}#{hash_password clear_password}"),
+          hashed_password.to_s
+        )
+      end
     end
   end
 

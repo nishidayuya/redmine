@@ -13,7 +13,14 @@ done
 # exists already.
 bundle exec rake db:create
 
-bundle exec rake db:migrate
+# On a database without the schema_migrations table, "db:migrate" of Rails 8.1
+# loads db/schema.rb instead of running the migrations, when the file is
+# there. It is, from an earlier run of this script, but it holds no data, while
+# db/migrate/001_setup.rb creates the "admin" account. Point SCHEMA at a file
+# that does not exist, so that the migrations always run. "db:migrate" dumps
+# the schema to that file afterwards, so remove it for the next run.
+SCHEMA=tmp/db-migrate-without-schema.rb bundle exec rake db:migrate
+rm -f tmp/db-migrate-without-schema.rb
 
 # db/schema.rb is ignored by git, and the test suite loads it into the test
 # database. This is what the "ci:setup" task does too.

@@ -15,6 +15,7 @@ default: &default
   host: <%= ENV.fetch('REDMINE_POSTGRES_HOST', 'postgres') %>
   username: <%= ENV.fetch('REDMINE_POSTGRES_USER', 'redmine') %>
   password: <%= ENV.fetch('REDMINE_POSTGRES_PASSWORD', 'redmine') %>
+  database: redmine
 
 #default: &default
 #  adapter: mysql2
@@ -24,15 +25,17 @@ default: &default
 #  host: <%= ENV.fetch('REDMINE_MYSQL_HOST', 'mysql') %>
 #  username: <%= ENV.fetch('REDMINE_MYSQL_USER', 'root') %>
 #  password: <%= ENV.fetch('REDMINE_MYSQL_PASSWORD', 'redmine') %>
+#  database: redmine
 #  variables:
 #    # Recommended `transaction_isolation` for MySQL to avoid concurrency issues is
 #    # `READ-COMMITTED`.
 #    # See https://www.redmine.org/projects/redmine/wiki/MySQL_configuration
 #    transaction_isolation: "READ-COMMITTED"
 
+# This database is for development only, so development and production share
+# the one named in "default".
 development:
   <<: *default
-  database: redmine_development
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
@@ -43,4 +46,3 @@ test:
 
 production:
   <<: *default
-  database: redmine

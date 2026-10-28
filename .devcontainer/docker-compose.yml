@@ -1,15 +1,9 @@
 # Development stack for Redmine itself, driven by devcontainer.json.
 #
-# Inside this Compose network, the services are reachable under the service
-# names below. Work from inside the "app" container, for example with
+# No service publishes a port to the host on purpose: Redmine, Mailpit and the
+# databases are only reachable from inside this Compose network, under the
+# service names below. Work from inside the "app" container, for example with
 # "devcontainer exec --workspace-folder . bash".
-#
-# Only Redmine (web:3000) and the web UI of Mailpit (mailpit:8025) are also
-# published to the host, so that they can be opened in a browser there. The
-# host ports are left to Docker, which picks free ones, so that several of
-# these stacks can run side by side. Look them up with "docker compose port",
-# for example "docker compose port web 3000", or with "docker ps". The
-# databases are not published.
 #
 # The image versions come from .devcontainer/.env, see .env.example.
 
@@ -92,8 +86,9 @@ services:
       # Not tmp/pids/server.pid: that is in the shared workspace, where it would
       # stop a "bin/rails server" started by hand in "app".
       - --pid=/tmp/server.pid
-    # Published on a host port that Docker picks, see the top of this file.
-    ports:
+    # Exposed only, not published: it is listed in "docker ps", but reachable
+    # just from inside the Compose network.
+    expose:
       - "3000"
 
   # Background jobs. config/additional_environment.rb points Active Job at
@@ -144,10 +139,6 @@ services:
     restart: unless-stopped
     environment:
       MP_DATABASE: /data/mailpit.db
-    # The web UI, published on a host port that Docker picks, see the top of
-    # this file. The SMTP port, 1025, is not published.
-    ports:
-      - "8025"
     volumes:
       - mailpit-data:/data
 

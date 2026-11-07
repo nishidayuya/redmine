@@ -5,6 +5,12 @@ class ChangeUsersHashedPasswordLimit < ActiveRecord::Migration[8.1]
   end
 
   def down
+    # Argon2id hashes do not fit in 40 characters
+    if User.where('hashed_password LIKE ?', '$argon2id$%').exists?
+      raise ActiveRecord::IrreversibleMigration,
+            'Users have passwords hashed with Argon2id, reset them with SHA1 first'
+    end
+
     change_column :users, :hashed_password, :string, limit: 40, default: '', null: false
   end
 end

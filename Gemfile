@@ -23,7 +23,7 @@ gem "importmap-rails", "~> 2.0"
 gem 'commonmarker', '2.10.0'
 gem 'doorkeeper', '~> 5.9.6'
 gem "bcrypt", require: false
-gem "argon2id", "~> 0.10.0", require: false
+gem "argon2id", "~> 0.10.0"
 gem "doorkeeper-i18n", "~> 5.2"
 gem "requestjs-rails", "~> 0.0.13"
 

@@ -1149,7 +1149,6 @@ class User < Principal
     def digest_password(clear_password)
       case password_hash_algorithm
       when 'argon2id'
-        require 'argon2id'
         [nil, Argon2id::Password.create(clear_password.to_s).to_s]
       else
         salt = generate_salt
@@ -1161,7 +1160,6 @@ class User < Principal
     def verify_password(clear_password, salt, hashed_password)
       case password_hash_algorithm_of(hashed_password)
       when 'argon2id'
-        require 'argon2id'
         begin
           Argon2id::Password.new(hashed_password).is_password?(clear_password.to_s)
         rescue ArgumentError, Argon2id::Error

@@ -646,8 +646,8 @@ class UserTest < ActiveSupport::TestCase
 
   def test_try_to_login_should_rehash_sha1_password_with_argon2id
     user = User.find(1)
-    token = Token.create!(:user => user, :action => 'autologin')
-    passwd_changed_on = 1.day.ago.change(:usec => 0)
+    token = Token.create!(user:, action: 'autologin')
+    passwd_changed_on = 1.day.ago.change(usec: 0)
     user.update_column(:passwd_changed_on, passwd_changed_on)
 
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do

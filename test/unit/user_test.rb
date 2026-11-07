@@ -687,14 +687,6 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  def test_unsupported_password_hash_algorithm_should_raise_error
-    Redmine::Configuration.with 'password_hash_algorithm' => 'md5' do
-      assert_raise ArgumentError do
-        User.password_hash_algorithm
-      end
-    end
-  end
-
   def test_validate_password_length
     with_settings :password_min_length => '100' do
       user = User.new(:firstname => "new100",

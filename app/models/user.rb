@@ -355,33 +355,27 @@ class User < Principal
     if auth_source_id.present?
       auth_source.authenticate(self.login, clear_password)
     else
-      User.verify_password(clear_password, salt, hashed_password)
+      Redmine::PasswordHash.verify_password(clear_password, salt, hashed_password)
     end
   end
 
-  # Computes hashed_password for +clear_password+ with the algorithm given by
-  # the password_hash_algorithm setting of config/configuration.yml.
-  # The hashed password is stored in one of the following forms:
-  # * sha1: SHA1(salt + SHA1(password)) with a random salt stored in salt
-  # * argon2id: the PHC string format (e.g. "$argon2id$v=19$m=...") that
-  #   includes the salt and the parameters, salt is left blank
+  # Computes salt and hashed_password for +clear_password+ with the configured
+  # password hash algorithm, see Redmine::PasswordHash
   def salt_password(clear_password)
-    self.salt, self.hashed_password = User.digest_password(clear_password)
+    self.salt, self.hashed_password = Redmine::PasswordHash.digest_password(clear_password)
     self.passwd_changed_on = Time.now.change(:usec => 0)
   end
 
   # Returns true if hashed_password was not computed with the configured
   # password hash algorithm
   def password_hash_outdated?
-    return false if auth_source_id.present? || hashed_password.blank?
-
-    User.password_hash_algorithm_of(hashed_password) != User.password_hash_algorithm
+    Redmine::PasswordHash.outdated?(self)
   end
 
   # Rehashes +clear_password+ with the configured password hash algorithm
   # without changing passwd_changed_on nor invalidating the user's tokens
   def rehash_password!(clear_password)
-    salt, hashed_password = User.digest_password(clear_password)
+    salt, hashed_password = Redmine::PasswordHash.digest_password(clear_password)
     update_columns(salt:, hashed_password:)
   end
 
@@ -1126,51 +1120,6 @@ class User < Principal
     # Returns a 128bits random salt as a hex string (32 chars long)
     def generate_salt
       Redmine::Utils.random_hex(16)
-    end
-
-    PASSWORD_HASH_ALGORITHMS = %w(sha1 argon2id).freeze
-
-    # Returns the password hash algorithm used for new passwords
-    def password_hash_algorithm
-      algorithm = Redmine::Configuration['password_hash_algorithm'].to_s.downcase.presence || 'sha1'
-      unless PASSWORD_HASH_ALGORITHMS.include?(algorithm)
-        raise ArgumentError, "Unsupported password_hash_algorithm: #{algorithm}"
-      end
-
-      algorithm
-    end
-
-    # Returns the algorithm that computed +hashed_password+
-    def password_hash_algorithm_of(hashed_password)
-      hashed_password.to_s.start_with?('$argon2id$') ? 'argon2id' : 'sha1'
-    end
-
-    # Returns [salt, hashed_password] for +clear_password+
-    def digest_password(clear_password)
-      case password_hash_algorithm
-      when 'argon2id'
-        [nil, Argon2id::Password.create(clear_password.to_s).to_s]
-      else
-        salt = generate_salt
-        [salt, hash_password("#{salt}#{hash_password clear_password}")]
-      end
-    end
-
-    # Returns true if +clear_password+ matches +hashed_password+
-    def verify_password(clear_password, salt, hashed_password)
-      case password_hash_algorithm_of(hashed_password)
-      when 'argon2id'
-        begin
-          Argon2id::Password.new(hashed_password).is_password?(clear_password.to_s)
-        rescue ArgumentError, Argon2id::Error
-          false
-        end
-      else
-        ActiveSupport::SecurityUtils.secure_compare(
-          hash_password("#{salt}#{hash_password clear_password}"),
-          hashed_password.to_s
-        )
-      end
     end
   end
 

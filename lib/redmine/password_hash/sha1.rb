@@ -22,9 +22,7 @@ module Redmine
     # Stores SHA1(salt + SHA1(password)) as a hex string with a random salt
     module Sha1
       class << self
-        def match?(hashed_password)
-          /\A\h{40}\z/.match?(hashed_password.to_s)
-        end
+        def match?(hashed_password) = /\A\h{40}\z/.match?(hashed_password.to_s)
 
         def digest_password(clear_password)
           salt = Redmine::Utils.random_hex(16)

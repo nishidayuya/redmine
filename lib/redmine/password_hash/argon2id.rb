@@ -23,9 +23,7 @@ module Redmine
     # the salt and the parameters, so the salt is left blank
     module Argon2id
       class << self
-        def match?(hashed_password)
-          hashed_password.to_s.start_with?('$argon2id$')
-        end
+        def match?(hashed_password) = hashed_password.to_s.start_with?('$argon2id$')
 
         def digest_password(clear_password)
           [nil, ::Argon2id::Password.create(clear_password.to_s).to_s]

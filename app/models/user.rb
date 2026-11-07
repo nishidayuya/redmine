@@ -382,7 +382,7 @@ class User < Principal
   # without changing passwd_changed_on nor invalidating the user's tokens
   def rehash_password!(clear_password)
     salt, hashed_password = User.digest_password(clear_password)
-    update_columns(:salt => salt, :hashed_password => hashed_password)
+    update_columns(salt:, hashed_password:)
   end
 
   # Does the backend storage allow this user to change their password?

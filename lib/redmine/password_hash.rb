@@ -62,7 +62,7 @@ module Redmine
       private
 
       def current_algorithm_name
-        Redmine::Configuration['password_hash_algorithm'].to_s.downcase.presence&.to_sym || :sha1
+        Redmine::Configuration['password_hash_algorithm'].presence&.to_sym || :sha1
       end
 
       def current_algorithm

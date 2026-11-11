@@ -65,7 +65,7 @@ class Redmine::ApiTest::AuthenticationTest < Redmine::ApiTest::Base
     user = User.generate! do |user|
       user.password = 'my_password'
     end
-    with_password_hash_algorithm 'argon2id' do
+    with_password_hash_algorithm :argon2id do
       get '/users/current.xml', :headers => credentials(user.login, 'my_password')
       assert_response :ok
     end

@@ -503,7 +503,7 @@ class UsersControllerTest < Redmine::ControllerTest
   end
 
   def test_create_should_hash_password_with_configured_algorithm
-    with_password_hash_algorithm 'argon2id' do
+    with_password_hash_algorithm :argon2id do
       assert_difference 'User.count' do
         post :create, :params => {
           :user => {
@@ -827,7 +827,7 @@ class UsersControllerTest < Redmine::ControllerTest
   end
 
   def test_update_with_password_change_should_hash_password_with_configured_algorithm
-    with_password_hash_algorithm 'argon2id' do
+    with_password_hash_algorithm :argon2id do
       put :update, :params => {
         :id => 2,
         :user => {:password => 'newpass123', :password_confirmation => 'newpass123'}

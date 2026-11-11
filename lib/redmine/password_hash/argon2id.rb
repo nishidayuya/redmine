@@ -30,8 +30,7 @@ module Redmine
           [nil, ::Argon2id::Password.create(clear_password.to_s).to_s]
         end
 
-        # Returns true if +clear_password+ matches +hashed_password+, whatever
-        # algorithm hashed it
+        # Returns true if +clear_password+ matches +hashed_password+
         def verify_password(clear_password, salt, hashed_password)
           ::Argon2id::Password.new(hashed_password).is_password?(clear_password.to_s)
         rescue ArgumentError, ::Argon2id::Error

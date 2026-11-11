@@ -30,8 +30,7 @@ module Redmine
           [salt, hash("#{salt}#{hash(clear_password)}")]
         end
 
-        # Returns true if +clear_password+ matches +hashed_password+, whatever
-        # algorithm hashed it
+        # Returns true if +clear_password+ matches +hashed_password+
         def verify_password(clear_password, salt, hashed_password)
           ActiveSupport::SecurityUtils.secure_compare(
             hash("#{salt}#{hash(clear_password)}"),

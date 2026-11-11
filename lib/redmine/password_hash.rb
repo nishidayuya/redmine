@@ -36,6 +36,7 @@ module Redmine
     end
 
     class << self
+      # Returns the algorithm given by the password_hash_algorithm setting
       def current_algorithm
         name = Redmine::Configuration['password_hash_algorithm'].presence&.to_sym || :sha1
         ALGORITHMS[name]

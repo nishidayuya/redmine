@@ -74,7 +74,7 @@ class SudoModeTest < Redmine::IntegrationTest
 
   def test_add_user_with_argon2id_password
     hash_password_with :argon2id, User.find(1), 'admin'
-    with_password_hash_algorithm 'argon2id' do
+    with_password_hash_algorithm :argon2id do
       log_user("admin", "admin")
       expire_sudo_mode!
       assert Redmine::PasswordHash::Argon2id.match?(User.find(1).hashed_password)

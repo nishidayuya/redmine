@@ -24,9 +24,9 @@ module Redmine
   # passwords hashed with any of ALGORITHMS can be verified.
   module PasswordHash
     # Order of strength
-    algorithm_names = [
-      :argon2id,
-      :sha1
+    algorithm_names = %i[
+      argon2id
+      sha1
     ]
     ALGORITHMS = algorithm_names.each.with_object({}) do |name, h|
       h[name] = Redmine::PasswordHash.const_get(name.to_s.camelize)

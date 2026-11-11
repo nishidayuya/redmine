@@ -244,7 +244,7 @@ class User < Principal
       return nil unless user.check_password?(password)
       return nil if !user.active? && active_only
 
-      user.rehash_password!(password)
+      user.rehash_password!(password) if user.password_hash_outdated?
     else
       # user is not yet registered, try to authenticate with available sources
       attrs = AuthSource.authenticate(login, password)
@@ -367,16 +367,21 @@ class User < Principal
     self.passwd_changed_on = Time.now.change(:usec => 0)
   end
 
+  # Returns true if hashed_password was not computed with the configured
+  # password hash algorithm
+  def password_hash_outdated?
+    return false if auth_source_id.present? || hashed_password.blank?
+
+    Redmine::PasswordHash.current_algorithm != password_hash_algorithm
+  end
+
   # Returns the algorithm that hashed hashed_password, or nil if the password
   # is blank or hashed with an unknown algorithm
   def password_hash_algorithm = Redmine::PasswordHash.algorithm_for(hashed_password)
 
-  # Rehashes +clear_password+ with the configured password hash algorithm if
-  # hashed_password was computed with another one, without changing
-  # passwd_changed_on nor invalidating the user's tokens
+  # Rehashes +clear_password+ with the configured password hash algorithm
+  # without changing passwd_changed_on nor invalidating the user's tokens
   def rehash_password!(clear_password)
-    return unless password_hash_outdated?
-
     salt, hashed_password = Redmine::PasswordHash.current_algorithm.digest_password(clear_password)
     update_columns(salt:, hashed_password:)
   end
@@ -1053,14 +1058,6 @@ class User < Principal
 
   def instantiate_email_address
     email_address || build_email_address
-  end
-
-  # Returns true if hashed_password was not computed with the configured
-  # password hash algorithm
-  def password_hash_outdated?
-    return false if auth_source_id.present? || hashed_password.blank?
-
-    Redmine::PasswordHash.current_algorithm != password_hash_algorithm
   end
 
   private

@@ -174,7 +174,7 @@ class AccountControllerTest < Redmine::ControllerTest
   end
 
   def test_login_should_rehash_sha1_password_with_argon2id
-    with_password_hash_algorithm :argon2id do
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
       post :login, :params => {:username => 'jsmith', :password => 'jsmith'}
       assert_redirected_to '/my/page'
     end
@@ -183,7 +183,7 @@ class AccountControllerTest < Redmine::ControllerTest
 
   def test_login_should_rehash_argon2id_password_with_sha1
     hash_password_with :argon2id, User.find(2), 'jsmith'
-    with_password_hash_algorithm :sha1 do
+    Redmine::Configuration.with 'password_hash_algorithm' => 'sha1' do
       post :login, :params => {:username => 'jsmith', :password => 'jsmith'}
       assert_redirected_to '/my/page'
     end
@@ -193,7 +193,7 @@ class AccountControllerTest < Redmine::ControllerTest
   def test_login_with_argon2id_password
     hash_password_with :argon2id, User.find(2), 'jsmith'
     hashed_password = User.find(2).hashed_password
-    with_password_hash_algorithm :argon2id do
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
       post :login, :params => {:username => 'jsmith', :password => 'jsmith'}
       assert_redirected_to '/my/page'
     end
@@ -202,7 +202,7 @@ class AccountControllerTest < Redmine::ControllerTest
 
   def test_login_with_wrong_password_should_not_rehash_password
     hashed_password = User.find(2).hashed_password
-    with_password_hash_algorithm :argon2id do
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
       post :login, :params => {:username => 'jsmith', :password => 'bad'}
       assert_response :success
       assert_select 'div.flash.error', :text => /Invalid user or password/
@@ -627,7 +627,7 @@ class AccountControllerTest < Redmine::ControllerTest
   def test_post_lost_password_with_token_should_hash_password_with_configured_algorithm
     user = User.find(2)
     token = Token.create!(:action => 'recovery', :user => user)
-    with_password_hash_algorithm :argon2id do
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
       post(
         :lost_password,
         :params => {

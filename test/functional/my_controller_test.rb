@@ -694,7 +694,7 @@ class MyControllerTest < Redmine::ControllerTest
   end
 
   def test_update_password_should_hash_password_with_configured_algorithm
-    with_password_hash_algorithm :argon2id do
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
       post(
         :password,
         :params => {

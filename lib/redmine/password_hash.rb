@@ -21,13 +21,20 @@ module Redmine
   # Hashes and verifies the passwords of the users authenticated by Redmine
   # itself. New passwords are hashed with the algorithm given by the
   # password_hash_algorithm setting of config/configuration.yml, and
-  # passwords hashed with any of ALGORITHM_NAMES can be verified.
+  # passwords hashed with any of ALGORITHMS can be verified.
   module PasswordHash
     # Order of strength
-    ALGORITHM_NAMES = %w[
-      argon2id
-      sha1
-    ].freeze
+    algorithm_names = [
+      :argon2id,
+      :sha1
+    ]
+    ALGORITHMS = algorithm_names.each.with_object({}) do |name, h|
+      h[name] = Redmine::PasswordHash.const_get(name.to_s.camelize)
+    end
+    ALGORITHMS.default_proc = ->(_algorithms, name) do
+      raise ArgumentError, "Unsupported password hash algorithm: name=#{name}"
+    end
+    ALGORITHMS.freeze
 
     class << self
       # Returns true if the password of +user+ was not hashed with the
@@ -55,23 +62,16 @@ module Redmine
       private
 
       def current_algorithm_name
-        name = Redmine::Configuration['password_hash_algorithm'].to_s.downcase.presence || 'sha1'
-        raise ArgumentError, "Unsupported password_hash_algorithm: #{name}" unless ALGORITHM_NAMES.include?(name)
-
-        name
+        Redmine::Configuration['password_hash_algorithm'].to_s.downcase.presence&.to_sym || :sha1
       end
 
       def current_algorithm
-        algorithm(current_algorithm_name)
-      end
-
-      def algorithm(name)
-        Redmine::PasswordHash.const_get(name.camelize)
+        ALGORITHMS[current_algorithm_name]
       end
 
       # Returns the algorithm that hashed +hashed_password+, or nil
       def algorithm_for(hashed_password)
-        ALGORITHM_NAMES.map {|name| algorithm(name)}.find {|a| a.match?(hashed_password)}
+        ALGORITHMS.values.find {|algorithm| algorithm.match?(hashed_password)}
       end
     end
   end

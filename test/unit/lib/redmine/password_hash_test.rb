@@ -22,6 +22,20 @@ require_relative '../../../test_helper'
 class Redmine::PasswordHashTest < ActiveSupport::TestCase
   fixtures :users
 
+  def test_algorithms
+    assert_equal(
+      {argon2id: Redmine::PasswordHash::Argon2id, sha1: Redmine::PasswordHash::Sha1},
+      Redmine::PasswordHash::ALGORITHMS
+    )
+  end
+
+  def test_algorithms_should_raise_error_with_unsupported_name
+    error = assert_raise ArgumentError do
+      Redmine::PasswordHash::ALGORITHMS[:md5]
+    end
+    assert_equal 'Unsupported password hash algorithm: name=md5', error.message
+  end
+
   def test_sha1
     salt, hashed_password = Redmine::PasswordHash::Sha1.digest_password('hello123')
 

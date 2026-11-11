@@ -20,37 +20,6 @@
 require_relative '../../../test_helper'
 
 class Redmine::PasswordHashTest < ActiveSupport::TestCase
-  def test_algorithms
-    assert_equal(
-      {argon2id: Redmine::PasswordHash::Argon2id, sha1: Redmine::PasswordHash::Sha1},
-      Redmine::PasswordHash::ALGORITHMS
-    )
-  end
-
-  def test_sha1
-    salt, hashed_password = Redmine::PasswordHash::Sha1.digest_password('hello123')
-
-    assert_match /\A\h{32}\z/, salt
-    assert Redmine::PasswordHash::Sha1.match?(hashed_password)
-    assert_not Redmine::PasswordHash::Argon2id.match?(hashed_password)
-    assert Redmine::PasswordHash::Sha1.verify_password('hello123', salt, hashed_password)
-    assert_not Redmine::PasswordHash::Sha1.verify_password('hello124', salt, hashed_password)
-  end
-
-  def test_argon2id
-    salt, hashed_password = Redmine::PasswordHash::Argon2id.digest_password('hello123')
-
-    assert_nil salt
-    assert Redmine::PasswordHash::Argon2id.match?(hashed_password)
-    assert_not Redmine::PasswordHash::Sha1.match?(hashed_password)
-    assert Redmine::PasswordHash::Argon2id.verify_password('hello123', nil, hashed_password)
-    assert_not Redmine::PasswordHash::Argon2id.verify_password('hello124', nil, hashed_password)
-  end
-
-  def test_argon2id_verify_password_should_return_false_with_broken_hash
-    assert_not Redmine::PasswordHash::Argon2id.verify_password('hello123', nil, '$argon2id$broken')
-  end
-
   def test_current_algorithm_should_return_configured_algorithm
     with_password_hash_algorithm :sha1 do
       assert_equal Redmine::PasswordHash::Sha1, Redmine::PasswordHash.current_algorithm

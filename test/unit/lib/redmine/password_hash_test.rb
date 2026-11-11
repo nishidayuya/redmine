@@ -20,8 +20,6 @@
 require_relative '../../../test_helper'
 
 class Redmine::PasswordHashTest < ActiveSupport::TestCase
-  fixtures :users
-
   def test_algorithms
     assert_equal(
       {argon2id: Redmine::PasswordHash::Argon2id, sha1: Redmine::PasswordHash::Sha1},
@@ -60,75 +58,45 @@ class Redmine::PasswordHashTest < ActiveSupport::TestCase
     assert_not Redmine::PasswordHash::Argon2id.verify_password('hello123', nil, '$argon2id$broken')
   end
 
-  def test_digest_password_should_use_configured_algorithm
+  def test_current_algorithm_should_return_configured_algorithm
     with_password_hash_algorithm 'sha1' do
-      assert Redmine::PasswordHash::Sha1.match?(Redmine::PasswordHash.digest_password('hello123').last)
+      assert_equal Redmine::PasswordHash::Sha1, Redmine::PasswordHash.current_algorithm
     end
     with_password_hash_algorithm 'argon2id' do
-      assert Redmine::PasswordHash::Argon2id.match?(Redmine::PasswordHash.digest_password('hello123').last)
+      assert_equal Redmine::PasswordHash::Argon2id, Redmine::PasswordHash.current_algorithm
     end
   end
 
-  def test_digest_password_should_use_sha1_by_default
+  def test_current_algorithm_should_return_sha1_by_default
     with_password_hash_algorithm nil do
-      assert Redmine::PasswordHash::Sha1.match?(Redmine::PasswordHash.digest_password('hello123').last)
+      assert_equal Redmine::PasswordHash::Sha1, Redmine::PasswordHash.current_algorithm
     end
   end
 
-  def test_digest_password_should_raise_error_with_unsupported_algorithm
+  def test_current_algorithm_should_raise_error_with_unsupported_algorithm
     with_password_hash_algorithm 'md5' do
       assert_raise ArgumentError do
-        Redmine::PasswordHash.digest_password('hello123')
+        Redmine::PasswordHash.current_algorithm
       end
     end
   end
 
-  def test_verify_password_should_verify_any_algorithm
-    sha1 = Redmine::PasswordHash::Sha1.digest_password('hello123')
-    argon2id = Redmine::PasswordHash::Argon2id.digest_password('hello123')
+  def test_algorithm_for
+    _, sha1 = Redmine::PasswordHash::Sha1.digest_password('hello123')
+    _, argon2id = Redmine::PasswordHash::Argon2id.digest_password('hello123')
 
     %w[sha1 argon2id].each do |name|
       with_password_hash_algorithm name do
-        assert Redmine::PasswordHash.verify_password('hello123', *sha1)
-        assert Redmine::PasswordHash.verify_password('hello123', *argon2id)
-        assert_not Redmine::PasswordHash.verify_password('hello124', *sha1)
-        assert_not Redmine::PasswordHash.verify_password('hello124', *argon2id)
+        assert_equal Redmine::PasswordHash::Sha1, Redmine::PasswordHash.algorithm_for(sha1)
+        assert_equal Redmine::PasswordHash::Argon2id, Redmine::PasswordHash.algorithm_for(argon2id)
       end
     end
   end
 
-  def test_verify_password_should_return_false_with_unknown_hash
-    assert_not Redmine::PasswordHash.verify_password('', nil, '')
-    assert_not Redmine::PasswordHash.verify_password('hello123', nil, '$2a$12$unknown')
-  end
-
-  def test_outdated
-    user = User.find(1)
-
-    with_password_hash_algorithm 'sha1' do
-      assert_not Redmine::PasswordHash.outdated?(user)
-    end
-    with_password_hash_algorithm 'argon2id' do
-      assert Redmine::PasswordHash.outdated?(user)
-    end
-  end
-
-  def test_outdated_should_return_false_without_hashed_password
-    user = User.find(1)
-    user.hashed_password = ''
-
-    with_password_hash_algorithm 'argon2id' do
-      assert_not Redmine::PasswordHash.outdated?(user)
-    end
-  end
-
-  def test_outdated_should_return_false_with_auth_source
-    user = User.find(1)
-    user.auth_source_id = 1
-
-    with_password_hash_algorithm 'argon2id' do
-      assert_not Redmine::PasswordHash.outdated?(user)
-    end
+  def test_algorithm_for_should_return_nil_with_unknown_hash
+    assert_nil Redmine::PasswordHash.algorithm_for('')
+    assert_nil Redmine::PasswordHash.algorithm_for(nil)
+    assert_nil Redmine::PasswordHash.algorithm_for('$2a$12$unknown')
   end
 
   private

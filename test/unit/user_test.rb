@@ -679,6 +679,24 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
+  def test_password_hash_outdated_should_return_false_without_hashed_password
+    user = User.find(1)
+    user.hashed_password = ''
+
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
+      assert_not user.password_hash_outdated?
+    end
+  end
+
+  def test_password_hash_outdated_should_return_false_with_auth_source
+    user = User.find(1)
+    user.auth_source_id = 1
+
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
+      assert_not user.password_hash_outdated?
+    end
+  end
+
   def test_try_to_login_should_not_rehash_password_with_wrong_password
     user = User.find(1)
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do

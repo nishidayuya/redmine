@@ -146,12 +146,6 @@ class ActiveSupport::TestCase
     saved_settings.each {|k, v| Setting[k] = v} if saved_settings
   end
 
-  # Yields the block with the password_hash_algorithm setting of
-  # config/configuration.yml set to the Symbol name, or unset with nil
-  def with_password_hash_algorithm(name, &)
-    Redmine::Configuration.with('password_hash_algorithm' => name&.to_s, &)
-  end
-
   # Stores password of user hashed with the password hash algorithm name,
   # whatever the password_hash_algorithm setting is
   def hash_password_with(name, user, password)

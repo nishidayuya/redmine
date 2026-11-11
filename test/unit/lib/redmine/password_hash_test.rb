@@ -21,22 +21,22 @@ require_relative '../../../test_helper'
 
 class Redmine::PasswordHashTest < ActiveSupport::TestCase
   def test_s_current_algorithm_should_return_configured_algorithm
-    with_password_hash_algorithm :sha1 do
+    Redmine::Configuration.with 'password_hash_algorithm' => 'sha1' do
       assert_equal Redmine::PasswordHash::Sha1, Redmine::PasswordHash.current_algorithm
     end
-    with_password_hash_algorithm :argon2id do
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
       assert_equal Redmine::PasswordHash::Argon2id, Redmine::PasswordHash.current_algorithm
     end
   end
 
   def test_s_current_algorithm_should_return_sha1_by_default
-    with_password_hash_algorithm nil do
+    Redmine::Configuration.with 'password_hash_algorithm' => nil do
       assert_equal Redmine::PasswordHash::Sha1, Redmine::PasswordHash.current_algorithm
     end
   end
 
   def test_s_current_algorithm_should_raise_error_with_unsupported_algorithm
-    with_password_hash_algorithm :md5 do
+    Redmine::Configuration.with 'password_hash_algorithm' => 'md5' do
       error = assert_raise ArgumentError do
         Redmine::PasswordHash.current_algorithm
       end
@@ -48,8 +48,8 @@ class Redmine::PasswordHashTest < ActiveSupport::TestCase
     _, sha1 = Redmine::PasswordHash::Sha1.digest_password('hello123')
     _, argon2id = Redmine::PasswordHash::Argon2id.digest_password('hello123')
 
-    [:sha1, :argon2id].each do |name|
-      with_password_hash_algorithm name do
+    %w[sha1 argon2id].each do |name|
+      Redmine::Configuration.with 'password_hash_algorithm' => name do
         assert_equal Redmine::PasswordHash::Sha1, Redmine::PasswordHash.algorithm_for(sha1)
         assert_equal Redmine::PasswordHash::Argon2id, Redmine::PasswordHash.algorithm_for(argon2id)
       end

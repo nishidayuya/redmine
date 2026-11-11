@@ -31,15 +31,12 @@ module Redmine
     ALGORITHMS = algorithm_names.each.with_object({}) do |name, h|
       h[name] = Redmine::PasswordHash.const_get(name.to_s.camelize)
     end
-    ALGORITHMS.default_proc = ->(_algorithms, name) do
-      raise ArgumentError, "Unsupported password hash algorithm: name=#{name}"
-    end
 
     class << self
       # Returns the algorithm given by the password_hash_algorithm setting
       def current_algorithm
         name = Redmine::Configuration['password_hash_algorithm'].presence&.to_sym || :sha1
-        ALGORITHMS[name]
+        ALGORITHMS[name] || raise(ArgumentError, "Unsupported password hash algorithm: name=#{name}")
       end
 
       # Returns the algorithm that hashed +hashed_password+, or nil

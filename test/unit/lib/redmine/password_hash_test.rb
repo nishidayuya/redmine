@@ -27,13 +27,6 @@ class Redmine::PasswordHashTest < ActiveSupport::TestCase
     )
   end
 
-  def test_algorithms_should_raise_error_with_unsupported_name
-    error = assert_raise ArgumentError do
-      Redmine::PasswordHash::ALGORITHMS[:md5]
-    end
-    assert_equal 'Unsupported password hash algorithm: name=md5', error.message
-  end
-
   def test_sha1
     salt, hashed_password = Redmine::PasswordHash::Sha1.digest_password('hello123')
 
@@ -75,9 +68,10 @@ class Redmine::PasswordHashTest < ActiveSupport::TestCase
 
   def test_current_algorithm_should_raise_error_with_unsupported_algorithm
     with_password_hash_algorithm 'md5' do
-      assert_raise ArgumentError do
+      error = assert_raise ArgumentError do
         Redmine::PasswordHash.current_algorithm
       end
+      assert_equal 'Unsupported password hash algorithm: name=md5', error.message
     end
   end
 

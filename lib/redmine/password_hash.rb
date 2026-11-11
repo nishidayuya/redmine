@@ -36,36 +36,9 @@ module Redmine
     end
 
     class << self
-      # Returns true if the password of +user+ was not hashed with the
-      # configured algorithm
-      def outdated?(user)
-        return false if user.auth_source_id.present? || user.hashed_password.blank?
-
-        !current_algorithm.match?(user.hashed_password)
-      end
-
-      # Returns [salt, hashed_password] for +clear_password+
-      def digest_password(clear_password)
-        current_algorithm.digest_password(clear_password)
-      end
-
-      # Returns true if +clear_password+ matches +hashed_password+, whatever
-      # algorithm hashed it
-      def verify_password(clear_password, salt, hashed_password)
-        algorithm = algorithm_for(hashed_password)
-        return false unless algorithm
-
-        algorithm.verify_password(clear_password, salt, hashed_password)
-      end
-
-      private
-
-      def current_algorithm_name
-        Redmine::Configuration['password_hash_algorithm'].presence&.to_sym || :sha1
-      end
-
       def current_algorithm
-        ALGORITHMS[current_algorithm_name]
+        name = Redmine::Configuration['password_hash_algorithm'].presence&.to_sym || :sha1
+        ALGORITHMS[name]
       end
 
       # Returns the algorithm that hashed +hashed_password+, or nil

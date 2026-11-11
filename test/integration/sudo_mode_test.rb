@@ -72,6 +72,29 @@ class SudoModeTest < Redmine::IntegrationTest
     assert_kind_of User, user
   end
 
+  def test_add_user_with_argon2id_password
+    hash_password_with :argon2id, User.find(1), 'admin'
+    with_password_hash_algorithm 'argon2id' do
+      log_user("admin", "admin")
+      expire_sudo_mode!
+      assert Redmine::PasswordHash::Argon2id.match?(User.find(1).hashed_password)
+
+      user_params = {
+        :login => "psmith", :firstname => "Paul",
+        :lastname => "Smith", :mail => "psmith@somenet.foo",
+        :language => "en", :password => "psmith09",
+        :password_confirmation => "psmith09"
+      }
+      post "/users", :params => {:user => user_params, :sudo_password => 'wrong'}
+      assert_response :success
+      assert_nil User.find_by_login("psmith")
+
+      post "/users", :params => {:user => user_params, :sudo_password => 'admin'}
+      assert_response :found
+      assert_kind_of User, User.find_by_login("psmith")
+    end
+  end
+
   def test_create_member_xhr
     log_user 'admin', 'admin'
     expire_sudo_mode!

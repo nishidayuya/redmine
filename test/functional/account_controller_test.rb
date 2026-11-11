@@ -173,6 +173,43 @@ class AccountControllerTest < Redmine::ControllerTest
     assert_select 'input[name=password][value]', 0
   end
 
+  def test_login_should_rehash_sha1_password_with_argon2id
+    with_password_hash_algorithm 'argon2id' do
+      post :login, :params => {:username => 'jsmith', :password => 'jsmith'}
+      assert_redirected_to '/my/page'
+    end
+    assert Redmine::PasswordHash::Argon2id.match?(User.find(2).hashed_password)
+  end
+
+  def test_login_should_rehash_argon2id_password_with_sha1
+    hash_password_with :argon2id, User.find(2), 'jsmith'
+    with_password_hash_algorithm 'sha1' do
+      post :login, :params => {:username => 'jsmith', :password => 'jsmith'}
+      assert_redirected_to '/my/page'
+    end
+    assert Redmine::PasswordHash::Sha1.match?(User.find(2).hashed_password)
+  end
+
+  def test_login_with_argon2id_password
+    hash_password_with :argon2id, User.find(2), 'jsmith'
+    hashed_password = User.find(2).hashed_password
+    with_password_hash_algorithm 'argon2id' do
+      post :login, :params => {:username => 'jsmith', :password => 'jsmith'}
+      assert_redirected_to '/my/page'
+    end
+    assert_equal hashed_password, User.find(2).hashed_password
+  end
+
+  def test_login_with_wrong_password_should_not_rehash_password
+    hashed_password = User.find(2).hashed_password
+    with_password_hash_algorithm 'argon2id' do
+      post :login, :params => {:username => 'jsmith', :password => 'bad'}
+      assert_response :success
+      assert_select 'div.flash.error', :text => /Invalid user or password/
+    end
+    assert_equal hashed_password, User.find(2).hashed_password
+  end
+
   def test_login_with_locked_account_should_fail
     User.find(2).update_attribute :status, User::STATUS_LOCKED
     post(
@@ -585,6 +622,25 @@ class AccountControllerTest < Redmine::ControllerTest
     assert_select_email do
       assert_select 'a[href^=?]', 'http://localhost:3000/my/password', :text => 'Change password'
     end
+  end
+
+  def test_post_lost_password_with_token_should_hash_password_with_configured_algorithm
+    user = User.find(2)
+    token = Token.create!(:action => 'recovery', :user => user)
+    with_password_hash_algorithm 'argon2id' do
+      post(
+        :lost_password,
+        :params => {
+          :token => token.value,
+          :new_password => 'newpass123',
+          :new_password_confirmation => 'newpass123'
+        }
+      )
+      assert_redirected_to '/login'
+    end
+    user.reload
+    assert Redmine::PasswordHash::Argon2id.match?(user.hashed_password)
+    assert user.check_password?('newpass123')
   end
 
   def test_post_lost_password_with_token_for_non_active_user_should_fail

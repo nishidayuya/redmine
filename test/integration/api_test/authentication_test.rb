@@ -47,6 +47,31 @@ class Redmine::ApiTest::AuthenticationTest < Redmine::ApiTest::Base
     assert response.headers.has_key?('WWW-Authenticate')
   end
 
+  def test_api_should_accept_http_basic_auth_using_username_and_argon2id_password
+    user = User.generate!
+    hash_password_with :argon2id, user, 'my_password'
+    get '/users/current.xml', :headers => credentials(user.login, 'my_password')
+    assert_response :ok
+  end
+
+  def test_api_should_deny_http_basic_auth_using_username_and_wrong_argon2id_password
+    user = User.generate!
+    hash_password_with :argon2id, user, 'my_password'
+    get '/users/current.xml', :headers => credentials(user.login, 'wrong_password')
+    assert_response :unauthorized
+  end
+
+  def test_api_http_basic_auth_should_rehash_password_with_configured_algorithm
+    user = User.generate! do |user|
+      user.password = 'my_password'
+    end
+    with_password_hash_algorithm 'argon2id' do
+      get '/users/current.xml', :headers => credentials(user.login, 'my_password')
+      assert_response :ok
+    end
+    assert Redmine::PasswordHash::Argon2id.match?(user.reload.hashed_password)
+  end
+
   def test_api_should_deny_http_basic_auth_if_twofa_is_active
     user = User.generate! do |user|
       user.password = 'my_password'

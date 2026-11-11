@@ -27,7 +27,7 @@ class Redmine::PasswordHash::Sha1Test < ActiveSupport::TestCase
     assert_match /\A\h{40}\z/, hashed_password
   end
 
-  def test_s_match
+  def test_s_match_p
     _, hashed_password = Redmine::PasswordHash::Sha1.digest_password('hello123')
     _, argon2id = Redmine::PasswordHash::Argon2id.digest_password('hello123')
 

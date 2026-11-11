@@ -146,6 +146,19 @@ class ActiveSupport::TestCase
     saved_settings.each {|k, v| Setting[k] = v} if saved_settings
   end
 
+  # Yields the block with the password_hash_algorithm setting of
+  # config/configuration.yml set to name
+  def with_password_hash_algorithm(name, &)
+    Redmine::Configuration.with('password_hash_algorithm' => name, &)
+  end
+
+  # Stores password of user hashed with the password hash algorithm name,
+  # whatever the password_hash_algorithm setting is
+  def hash_password_with(name, user, password)
+    salt, hashed_password = Redmine::PasswordHash::ALGORITHMS.fetch(name).digest_password(password)
+    user.update_columns(salt:, hashed_password:)
+  end
+
   # Yields the block with user as the current user
   def with_current_user(user, &)
     saved_user = User.current

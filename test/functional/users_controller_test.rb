@@ -502,6 +502,28 @@ class UsersControllerTest < Redmine::ControllerTest
     assert_mail_body_match 'secret', mail
   end
 
+  def test_create_should_hash_password_with_configured_algorithm
+    with_password_hash_algorithm 'argon2id' do
+      assert_difference 'User.count' do
+        post :create, :params => {
+          :user => {
+            :firstname => 'John',
+            :lastname => 'Doe',
+            :login => 'jdoe',
+            :password => 'secret123',
+            :password_confirmation => 'secret123',
+            :mail => 'jdoe@gmail.com',
+            :mail_notification => 'none'
+          }
+        }
+      end
+    end
+    user = User.find_by_login('jdoe')
+    assert Redmine::PasswordHash::Argon2id.match?(user.hashed_password)
+    assert_nil user.salt
+    assert user.check_password?('secret123')
+  end
+
   def test_create_with_preferences
     assert_difference 'User.count' do
       post :create, :params => {
@@ -802,6 +824,19 @@ class UsersControllerTest < Redmine::ControllerTest
     assert_equal [user.mail], mail.to
     assert_match 'Security notification', mail.subject
     assert_mail_body_match 'Your password has been changed.', mail
+  end
+
+  def test_update_with_password_change_should_hash_password_with_configured_algorithm
+    with_password_hash_algorithm 'argon2id' do
+      put :update, :params => {
+        :id => 2,
+        :user => {:password => 'newpass123', :password_confirmation => 'newpass123'}
+      }
+      assert_redirected_to '/users/2/edit'
+    end
+    user = User.find(2)
+    assert Redmine::PasswordHash::Argon2id.match?(user.hashed_password)
+    assert user.check_password?('newpass123')
   end
 
   def test_update_with_generate_password_should_email_the_password

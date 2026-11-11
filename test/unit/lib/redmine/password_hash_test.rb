@@ -92,10 +92,4 @@ class Redmine::PasswordHashTest < ActiveSupport::TestCase
     assert_nil Redmine::PasswordHash.algorithm_for(nil)
     assert_nil Redmine::PasswordHash.algorithm_for('$2a$12$unknown')
   end
-
-  private
-
-  def with_password_hash_algorithm(name, &)
-    Redmine::Configuration.with('password_hash_algorithm' => name, &)
-  end
 end

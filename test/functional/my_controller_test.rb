@@ -693,6 +693,52 @@ class MyControllerTest < Redmine::ControllerTest
     assert User.try_to_login('jsmith', 'secret123')
   end
 
+  def test_update_password_should_hash_password_with_configured_algorithm
+    with_password_hash_algorithm 'argon2id' do
+      post(
+        :password,
+        :params => {
+          :password => 'jsmith',
+          :new_password => 'secret123',
+          :new_password_confirmation => 'secret123'
+        }
+      )
+      assert_redirected_to '/my/account'
+    end
+    user = User.find(2)
+    assert Redmine::PasswordHash::Argon2id.match?(user.hashed_password)
+    assert user.check_password?('secret123')
+  end
+
+  def test_update_password_with_argon2id_password
+    hash_password_with :argon2id, User.find(2), 'jsmith'
+    post(
+      :password,
+      :params => {
+        :password => 'jsmith',
+        :new_password => 'secret123',
+        :new_password_confirmation => 'secret123'
+      }
+    )
+    assert_redirected_to '/my/account'
+    assert User.try_to_login('jsmith', 'secret123')
+  end
+
+  def test_update_password_with_wrong_argon2id_password
+    hash_password_with :argon2id, User.find(2), 'jsmith'
+    post(
+      :password,
+      :params => {
+        :password => 'wrongpassword',
+        :new_password => 'secret123',
+        :new_password_confirmation => 'secret123'
+      }
+    )
+    assert_response :success
+    assert_equal 'Wrong password', flash[:error]
+    assert User.try_to_login('jsmith', 'jsmith')
+  end
+
   def test_update_password_with_non_matching_confirmation
     post(
       :password,

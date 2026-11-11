@@ -624,6 +624,7 @@ class UserTest < ActiveSupport::TestCase
       assert_nil user.salt
       assert user.check_password?("hello123")
       assert_not user.check_password?("hello124")
+      assert_not user.password_hash_outdated?
       assert_equal user, User.try_to_login("admin", "hello123")
       assert_nil User.try_to_login("admin", "hello124")
     end
@@ -639,6 +640,7 @@ class UserTest < ActiveSupport::TestCase
     Redmine::Configuration.with 'password_hash_algorithm' => 'sha1' do
       user.reload
       assert user.check_password?("hello123")
+      assert user.password_hash_outdated?
     end
   end
 
@@ -698,28 +700,22 @@ class UserTest < ActiveSupport::TestCase
     assert_nil User.try_to_login('admin', 'admin')
   end
 
-  def test_try_to_login_should_not_rehash_password_hashed_with_configured_algorithm
+  def test_password_hash_outdated_should_return_false_without_hashed_password
     user = User.find(1)
-    hash_password_with :argon2id, user, 'admin'
-    hashed_password = user.reload.hashed_password
+    user.hashed_password = ''
 
-    with_password_hash_algorithm 'argon2id' do
-      assert_equal user, User.try_to_login('admin', 'admin')
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
+      assert_not user.password_hash_outdated?
     end
-    assert_equal hashed_password, user.reload.hashed_password
   end
 
-  def test_try_to_login_should_not_hash_password_of_user_with_auth_source
+  def test_password_hash_outdated_should_return_false_with_auth_source
     user = User.find(1)
-    user.update_columns(auth_source_id: 1, salt: nil, hashed_password: '')
-    AuthSourceLdap.any_instance.stubs(:authenticate).returns(true)
+    user.auth_source_id = 1
 
-    with_password_hash_algorithm 'argon2id' do
-      assert_equal user, User.try_to_login('admin', 'ldap password')
+    Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
+      assert_not user.password_hash_outdated?
     end
-    user.reload
-    assert_equal '', user.hashed_password
-    assert_nil user.salt
   end
 
   def test_try_to_login_should_not_rehash_password_with_wrong_password

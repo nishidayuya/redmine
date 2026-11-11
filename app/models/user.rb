@@ -355,27 +355,31 @@ class User < Principal
     if auth_source_id.present?
       auth_source.authenticate(self.login, clear_password)
     else
-      Redmine::PasswordHash.verify_password(clear_password, salt, hashed_password)
+      password_hash_algorithm.verify_password(clear_password, salt, hashed_password)
     end
   end
 
   # Computes salt and hashed_password for +clear_password+ with the configured
   # password hash algorithm, see Redmine::PasswordHash
   def salt_password(clear_password)
-    self.salt, self.hashed_password = Redmine::PasswordHash.digest_password(clear_password)
+    self.salt, self.hashed_password = Redmine::PasswordHash.current_algorithm.digest_password(clear_password)
     self.passwd_changed_on = Time.now.change(:usec => 0)
   end
 
   # Returns true if hashed_password was not computed with the configured
   # password hash algorithm
   def password_hash_outdated?
-    Redmine::PasswordHash.outdated?(self)
+    return false if auth_source_id.present? || hashed_password.blank?
+
+    Redmine::PasswordHash.current_algorithm != password_hash_algorithm
   end
+
+  def password_hash_algorithm = Redmine::PasswordHash.algorithm_for(hashed_password)
 
   # Rehashes +clear_password+ with the configured password hash algorithm
   # without changing passwd_changed_on nor invalidating the user's tokens
   def rehash_password!(clear_password)
-    salt, hashed_password = Redmine::PasswordHash.digest_password(clear_password)
+    salt, hashed_password = Redmine::PasswordHash.current_algorithm.digest_password(clear_password)
     update_columns(salt:, hashed_password:)
   end
 

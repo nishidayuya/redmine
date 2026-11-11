@@ -24,11 +24,14 @@ module Redmine
       class << self
         def match?(hashed_password) = /\A\h{40}\z/.match?(hashed_password.to_s)
 
+        # Returns [salt, hashed_password] for +clear_password+
         def digest_password(clear_password)
           salt = Redmine::Utils.random_hex(16)
           [salt, hash("#{salt}#{hash(clear_password)}")]
         end
 
+        # Returns true if +clear_password+ matches +hashed_password+, whatever
+        # algorithm hashed it
         def verify_password(clear_password, salt, hashed_password)
           ActiveSupport::SecurityUtils.secure_compare(
             hash("#{salt}#{hash(clear_password)}"),

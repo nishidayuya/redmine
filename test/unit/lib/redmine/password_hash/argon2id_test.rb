@@ -27,7 +27,7 @@ class Redmine::PasswordHash::Argon2idTest < ActiveSupport::TestCase
     assert hashed_password.start_with?('$argon2id$')
   end
 
-  def test_s_match
+  def test_s_match_p
     _, hashed_password = Redmine::PasswordHash::Argon2id.digest_password('hello123')
     _, sha1 = Redmine::PasswordHash::Sha1.digest_password('hello123')
 

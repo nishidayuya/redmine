@@ -679,6 +679,27 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
+  def test_check_password_should_return_false_without_hashed_password
+    user = User.find(1)
+    user.hashed_password = ''
+
+    assert_not user.check_password?('admin')
+    assert_not user.check_password?('')
+  end
+
+  def test_check_password_should_return_false_with_unknown_hashed_password
+    user = User.find(1)
+    user.hashed_password = '$2a$12$unknown'
+
+    assert_not user.check_password?('admin')
+  end
+
+  def test_try_to_login_should_return_nil_without_hashed_password
+    User.find(1).update_columns(hashed_password: '')
+
+    assert_nil User.try_to_login('admin', 'admin')
+  end
+
   def test_password_hash_outdated_should_return_false_without_hashed_password
     user = User.find(1)
     user.hashed_password = ''

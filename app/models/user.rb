@@ -352,11 +352,12 @@ class User < Principal
 
   # Returns true if +clear_password+ is the correct user's password, otherwise false
   def check_password?(clear_password)
-    if auth_source_id.present?
-      auth_source.authenticate(self.login, clear_password)
-    else
-      password_hash_algorithm.verify_password(clear_password, salt, hashed_password)
-    end
+    return auth_source.authenticate(self.login, clear_password) if auth_source_id.present?
+
+    algorithm = password_hash_algorithm
+    return false unless algorithm
+
+    algorithm.verify_password(clear_password, salt, hashed_password)
   end
 
   # Computes salt and hashed_password for +clear_password+ with the configured
@@ -374,6 +375,8 @@ class User < Principal
     Redmine::PasswordHash.current_algorithm != password_hash_algorithm
   end
 
+  # Returns the algorithm that hashed hashed_password, or nil if the password
+  # is blank or hashed with an unknown algorithm
   def password_hash_algorithm = Redmine::PasswordHash.algorithm_for(hashed_password)
 
   # Rehashes +clear_password+ with the configured password hash algorithm

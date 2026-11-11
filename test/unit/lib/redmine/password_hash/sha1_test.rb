@@ -20,14 +20,14 @@
 require_relative '../../../../test_helper'
 
 class Redmine::PasswordHash::Sha1Test < ActiveSupport::TestCase
-  def test_digest_password
+  def test_s_digest_password
     salt, hashed_password = Redmine::PasswordHash::Sha1.digest_password('hello123')
 
     assert_match /\A\h{32}\z/, salt
     assert_match /\A\h{40}\z/, hashed_password
   end
 
-  def test_match
+  def test_s_match
     _, hashed_password = Redmine::PasswordHash::Sha1.digest_password('hello123')
     _, argon2id = Redmine::PasswordHash::Argon2id.digest_password('hello123')
 
@@ -37,7 +37,7 @@ class Redmine::PasswordHash::Sha1Test < ActiveSupport::TestCase
     assert_not Redmine::PasswordHash::Sha1.match?(nil)
   end
 
-  def test_verify_password
+  def test_s_verify_password
     salt, hashed_password = Redmine::PasswordHash::Sha1.digest_password('hello123')
 
     assert Redmine::PasswordHash::Sha1.verify_password('hello123', salt, hashed_password)

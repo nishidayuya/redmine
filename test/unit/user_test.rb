@@ -617,7 +617,7 @@ class UserTest < ActiveSupport::TestCase
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
       user = User.find(1)
       user.password = "hello123"
-      assert user.save
+      user.save!
 
       user.reload
       assert user.hashed_password.start_with?('$argon2id$')
@@ -634,7 +634,7 @@ class UserTest < ActiveSupport::TestCase
     user = User.find(1)
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
       user.password = "hello123"
-      assert user.save
+      user.save!
     end
 
     Redmine::Configuration.with 'password_hash_algorithm' => 'sha1' do
@@ -666,7 +666,7 @@ class UserTest < ActiveSupport::TestCase
     user = User.find(1)
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
       user.password = "hello123"
-      assert user.save
+      user.save!
     end
 
     Redmine::Configuration.with 'password_hash_algorithm' => 'sha1' do

@@ -84,6 +84,7 @@ class AccountTest < Redmine::IntegrationTest
     Redmine::Configuration.stubs(:[]).with('autologin_cookie_path').returns('/')
     Redmine::Configuration.stubs(:[]).with('autologin_cookie_secure').returns(false)
     Redmine::Configuration.stubs(:[]).with('sudo_mode_timeout').returns(15)
+    Redmine::Configuration.stubs(:[]).with('password_hash_algorithm').returns(nil)
 
     with_settings :autologin => '7' do
       assert_difference 'Token.count', 2 do

@@ -20,14 +20,14 @@
 require_relative '../../../../test_helper'
 
 class Redmine::PasswordHash::Argon2idTest < ActiveSupport::TestCase
-  def test_digest_password
+  def test_s_digest_password
     salt, hashed_password = Redmine::PasswordHash::Argon2id.digest_password('hello123')
 
     assert_nil salt
     assert hashed_password.start_with?('$argon2id$')
   end
 
-  def test_match
+  def test_s_match
     _, hashed_password = Redmine::PasswordHash::Argon2id.digest_password('hello123')
     _, sha1 = Redmine::PasswordHash::Sha1.digest_password('hello123')
 
@@ -37,14 +37,14 @@ class Redmine::PasswordHash::Argon2idTest < ActiveSupport::TestCase
     assert_not Redmine::PasswordHash::Argon2id.match?(nil)
   end
 
-  def test_verify_password
+  def test_s_verify_password
     _, hashed_password = Redmine::PasswordHash::Argon2id.digest_password('hello123')
 
     assert Redmine::PasswordHash::Argon2id.verify_password('hello123', nil, hashed_password)
     assert_not Redmine::PasswordHash::Argon2id.verify_password('hello124', nil, hashed_password)
   end
 
-  def test_verify_password_should_return_false_with_broken_hash
+  def test_s_verify_password_should_return_false_with_broken_hash
     assert_not Redmine::PasswordHash::Argon2id.verify_password('hello123', nil, '$argon2id$broken')
   end
 end

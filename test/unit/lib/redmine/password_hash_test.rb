@@ -20,7 +20,7 @@
 require_relative '../../../test_helper'
 
 class Redmine::PasswordHashTest < ActiveSupport::TestCase
-  def test_current_algorithm_should_return_configured_algorithm
+  def test_s_current_algorithm_should_return_configured_algorithm
     with_password_hash_algorithm :sha1 do
       assert_equal Redmine::PasswordHash::Sha1, Redmine::PasswordHash.current_algorithm
     end
@@ -29,13 +29,13 @@ class Redmine::PasswordHashTest < ActiveSupport::TestCase
     end
   end
 
-  def test_current_algorithm_should_return_sha1_by_default
+  def test_s_current_algorithm_should_return_sha1_by_default
     with_password_hash_algorithm nil do
       assert_equal Redmine::PasswordHash::Sha1, Redmine::PasswordHash.current_algorithm
     end
   end
 
-  def test_current_algorithm_should_raise_error_with_unsupported_algorithm
+  def test_s_current_algorithm_should_raise_error_with_unsupported_algorithm
     with_password_hash_algorithm :md5 do
       error = assert_raise ArgumentError do
         Redmine::PasswordHash.current_algorithm
@@ -44,7 +44,7 @@ class Redmine::PasswordHashTest < ActiveSupport::TestCase
     end
   end
 
-  def test_algorithm_for
+  def test_s_algorithm_for
     _, sha1 = Redmine::PasswordHash::Sha1.digest_password('hello123')
     _, argon2id = Redmine::PasswordHash::Argon2id.digest_password('hello123')
 
@@ -56,7 +56,7 @@ class Redmine::PasswordHashTest < ActiveSupport::TestCase
     end
   end
 
-  def test_algorithm_for_should_return_nil_with_unknown_hash
+  def test_s_algorithm_for_should_return_nil_with_unknown_hash
     assert_nil Redmine::PasswordHash.algorithm_for('')
     assert_nil Redmine::PasswordHash.algorithm_for(nil)
     assert_nil Redmine::PasswordHash.algorithm_for('$2a$12$unknown')

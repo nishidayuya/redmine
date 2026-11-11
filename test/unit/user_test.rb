@@ -644,7 +644,7 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  def test_try_to_login_should_rehash_sha1_password_with_argon2id
+  def test_s_try_to_login_should_rehash_sha1_password_with_argon2id
     user = User.find(1)
     token = Token.create!(user:, action: 'autologin')
     passwd_changed_on = 1.day.ago.change(usec: 0)
@@ -662,7 +662,7 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  def test_try_to_login_should_rehash_argon2id_password_with_sha1
+  def test_s_try_to_login_should_rehash_argon2id_password_with_sha1
     user = User.find(1)
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
       user.password = "hello123"
@@ -694,7 +694,7 @@ class UserTest < ActiveSupport::TestCase
     assert_not user.check_password?('admin')
   end
 
-  def test_try_to_login_should_return_nil_without_hashed_password
+  def test_s_try_to_login_should_return_nil_without_hashed_password
     User.find(1).update_columns(hashed_password: '')
 
     assert_nil User.try_to_login('admin', 'admin')
@@ -718,7 +718,7 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  def test_try_to_login_should_not_rehash_password_with_wrong_password
+  def test_s_try_to_login_should_not_rehash_password_with_wrong_password
     user = User.find(1)
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
       assert_nil User.try_to_login("admin", "wrong")

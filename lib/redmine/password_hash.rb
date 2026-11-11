@@ -34,7 +34,6 @@ module Redmine
     ALGORITHMS.default_proc = ->(_algorithms, name) do
       raise ArgumentError, "Unsupported password hash algorithm: name=#{name}"
     end
-    ALGORITHMS.freeze
 
     class << self
       # Returns true if the password of +user+ was not hashed with the

@@ -61,6 +61,14 @@ services:
   # commands of devcontainer.json in it, and keeps it alive.
   app:
     <<: *app
+    environment:
+      <<: *app-environment
+      # "bin/rails dbconsole" runs psql or mysql without the password unless it
+      # is given "--include-password", so these let the clients log in without
+      # asking for it. They match REDMINE_POSTGRES_PASSWORD and
+      # REDMINE_MYSQL_PASSWORD above.
+      PGPASSWORD: redmine
+      MYSQL_PWD: redmine
     build:
       context: .
       dockerfile: Dockerfile

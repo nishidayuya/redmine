@@ -50,14 +50,14 @@ class Redmine::ApiTest::AuthenticationTest < Redmine::ApiTest::Base
   def test_api_should_accept_http_basic_auth_using_username_and_argon2id_password
     user = User.generate!
     hash_password_with :argon2id, user, 'my_password'
-    get '/users/current.xml', :headers => credentials(user.login, 'my_password')
+    get '/users/current.xml', headers: credentials(user.login, 'my_password')
     assert_response :ok
   end
 
   def test_api_should_deny_http_basic_auth_using_username_and_wrong_argon2id_password
     user = User.generate!
     hash_password_with :argon2id, user, 'my_password'
-    get '/users/current.xml', :headers => credentials(user.login, 'wrong_password')
+    get '/users/current.xml', headers: credentials(user.login, 'wrong_password')
     assert_response :unauthorized
   end
 
@@ -66,7 +66,7 @@ class Redmine::ApiTest::AuthenticationTest < Redmine::ApiTest::Base
       user.password = 'my_password'
     end
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
-      get '/users/current.xml', :headers => credentials(user.login, 'my_password')
+      get '/users/current.xml', headers: credentials(user.login, 'my_password')
       assert_response :ok
     end
     assert Redmine::PasswordHash::Argon2id.match?(user.reload.hashed_password)

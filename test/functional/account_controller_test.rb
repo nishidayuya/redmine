@@ -175,7 +175,7 @@ class AccountControllerTest < Redmine::ControllerTest
 
   def test_login_should_rehash_sha1_password_with_argon2id
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
-      post :login, :params => {:username => 'jsmith', :password => 'jsmith'}
+      post :login, params: {username: 'jsmith', password: 'jsmith'}
       assert_redirected_to '/my/page'
     end
     assert Redmine::PasswordHash::Argon2id.match?(User.find(2).hashed_password)
@@ -184,7 +184,7 @@ class AccountControllerTest < Redmine::ControllerTest
   def test_login_should_rehash_argon2id_password_with_sha1
     hash_password_with :argon2id, User.find(2), 'jsmith'
     Redmine::Configuration.with 'password_hash_algorithm' => 'sha1' do
-      post :login, :params => {:username => 'jsmith', :password => 'jsmith'}
+      post :login, params: {username: 'jsmith', password: 'jsmith'}
       assert_redirected_to '/my/page'
     end
     assert Redmine::PasswordHash::Sha1.match?(User.find(2).hashed_password)
@@ -194,7 +194,7 @@ class AccountControllerTest < Redmine::ControllerTest
     hash_password_with :argon2id, User.find(2), 'jsmith'
     hashed_password = User.find(2).hashed_password
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
-      post :login, :params => {:username => 'jsmith', :password => 'jsmith'}
+      post :login, params: {username: 'jsmith', password: 'jsmith'}
       assert_redirected_to '/my/page'
     end
     assert_equal hashed_password, User.find(2).hashed_password
@@ -203,9 +203,9 @@ class AccountControllerTest < Redmine::ControllerTest
   def test_login_with_wrong_password_should_not_rehash_password
     hashed_password = User.find(2).hashed_password
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
-      post :login, :params => {:username => 'jsmith', :password => 'bad'}
+      post :login, params: {username: 'jsmith', password: 'bad'}
       assert_response :success
-      assert_select 'div.flash.error', :text => /Invalid user or password/
+      assert_select 'div.flash.error', text: /Invalid user or password/
     end
     assert_equal hashed_password, User.find(2).hashed_password
   end
@@ -626,14 +626,14 @@ class AccountControllerTest < Redmine::ControllerTest
 
   def test_post_lost_password_with_token_should_hash_password_with_configured_algorithm
     user = User.find(2)
-    token = Token.create!(:action => 'recovery', :user => user)
+    token = Token.create!(action: 'recovery', user:)
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
       post(
         :lost_password,
-        :params => {
-          :token => token.value,
-          :new_password => 'newpass123',
-          :new_password_confirmation => 'newpass123'
+        params: {
+          token: token.value,
+          new_password: 'newpass123',
+          new_password_confirmation: 'newpass123'
         }
       )
       assert_redirected_to '/login'

@@ -697,10 +697,10 @@ class MyControllerTest < Redmine::ControllerTest
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
       post(
         :password,
-        :params => {
-          :password => 'jsmith',
-          :new_password => 'secret123',
-          :new_password_confirmation => 'secret123'
+        params: {
+          password: 'jsmith',
+          new_password: 'secret123',
+          new_password_confirmation: 'secret123'
         }
       )
       assert_redirected_to '/my/account'
@@ -714,10 +714,10 @@ class MyControllerTest < Redmine::ControllerTest
     hash_password_with :argon2id, User.find(2), 'jsmith'
     post(
       :password,
-      :params => {
-        :password => 'jsmith',
-        :new_password => 'secret123',
-        :new_password_confirmation => 'secret123'
+      params: {
+        password: 'jsmith',
+        new_password: 'secret123',
+        new_password_confirmation: 'secret123'
       }
     )
     assert_redirected_to '/my/account'
@@ -728,10 +728,10 @@ class MyControllerTest < Redmine::ControllerTest
     hash_password_with :argon2id, User.find(2), 'jsmith'
     post(
       :password,
-      :params => {
-        :password => 'wrongpassword',
-        :new_password => 'secret123',
-        :new_password_confirmation => 'secret123'
+      params: {
+        password: 'wrongpassword',
+        new_password: 'secret123',
+        new_password_confirmation: 'secret123'
       }
     )
     assert_response :success

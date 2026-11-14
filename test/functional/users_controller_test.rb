@@ -505,15 +505,15 @@ class UsersControllerTest < Redmine::ControllerTest
   def test_create_should_hash_password_with_configured_algorithm
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
       assert_difference 'User.count' do
-        post :create, :params => {
-          :user => {
-            :firstname => 'John',
-            :lastname => 'Doe',
-            :login => 'jdoe',
-            :password => 'secret123',
-            :password_confirmation => 'secret123',
-            :mail => 'jdoe@gmail.com',
-            :mail_notification => 'none'
+        post :create, params: {
+          user: {
+            firstname: 'John',
+            lastname: 'Doe',
+            login: 'jdoe',
+            password: 'secret123',
+            password_confirmation: 'secret123',
+            mail: 'jdoe@gmail.com',
+            mail_notification: 'none'
           }
         }
       end
@@ -828,9 +828,9 @@ class UsersControllerTest < Redmine::ControllerTest
 
   def test_update_with_password_change_should_hash_password_with_configured_algorithm
     Redmine::Configuration.with 'password_hash_algorithm' => 'argon2id' do
-      put :update, :params => {
-        :id => 2,
-        :user => {:password => 'newpass123', :password_confirmation => 'newpass123'}
+      put :update, params: {
+        id: 2,
+        user: {password: 'newpass123', password_confirmation: 'newpass123'}
       }
       assert_redirected_to '/users/2/edit'
     end

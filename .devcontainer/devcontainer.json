@@ -8,6 +8,7 @@
   "runServices": [
     "app",
     "web",
+    "web-production",
     "sidekiq",
     "postgres",
     "mysql",

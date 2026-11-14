@@ -50,6 +50,15 @@ do
 done
 curl -fsS http://web:3000/login | grep -q 'id="login-form"'
 
+# So does the "web-production" service, in the production environment. It
+# boots slower: it eager loads the code and may precompile the assets first.
+for _ in $(seq 120)
+do
+  curl -fsS -o /dev/null http://web-production:3000/login && break
+  sleep 2
+done
+curl -fsS http://web-production:3000/login | grep -q 'id="login-form"'
+
 # An email that Redmine enqueues is delivered by the "sidekiq" service to
 # Mailpit.
 bin/rails runner '

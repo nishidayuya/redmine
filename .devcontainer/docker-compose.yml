@@ -91,6 +91,29 @@ services:
     expose:
       - "3000"
 
+  # Redmine in the production environment, on http://web-production:3000, to
+  # try what development hides: eager loading, caching, precompiled assets and
+  # error pages. It shares the database with "web" (see config/database.yml).
+  # Code is loaded once at boot, so restart it with
+  # "docker compose restart web-production" from the host after a change.
+  web-production:
+    <<: *app-image-user
+    environment:
+      <<: *app-environment
+      RAILS_ENV: production
+      # config/environments/production.rb logs to log/production.log unless
+      # this is set; "docker compose logs" is where "web" shows its log.
+      RAILS_LOG_TO_STDOUT: "1"
+    command:
+      - .devcontainer/wait-for-setup.sh
+      - bin/rails
+      - server
+      - --binding=0.0.0.0
+      - --port=3000
+      - --pid=/tmp/server.pid
+    expose:
+      - "3000"
+
   # Background jobs. config/additional_environment.rb points Active Job at
   # Sidekiq in every environment but "test".
   sidekiq:

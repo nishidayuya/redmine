@@ -244,7 +244,7 @@ class User < Principal
       return nil unless user.check_password?(password)
       return nil if !user.active? && active_only
 
-      user.rehash_password!(password) if user.password_hash_outdated?
+      user.rehash_password(password) if user.password_hash_outdated?
     else
       # user is not yet registered, try to authenticate with available sources
       attrs = AuthSource.authenticate(login, password)
@@ -381,7 +381,7 @@ class User < Principal
 
   # Rehashes +clear_password+ with the configured password hash algorithm
   # without changing passwd_changed_on nor invalidating the user's tokens
-  def rehash_password!(clear_password)
+  def rehash_password(clear_password)
     salt, hashed_password = Redmine::PasswordHash.current_algorithm.digest_password(clear_password)
     update_columns(salt:, hashed_password:)
   end
